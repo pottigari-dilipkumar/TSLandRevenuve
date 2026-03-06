@@ -1,0 +1,81 @@
+openapi: 3.0.3
+info:
+  title: Land Revenue & Registration API
+  version: 0.2.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/auth/aadhaar/send-otp:
+    post:
+      summary: Send OTP for Aadhaar authentication (demo)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [aadhaarNumber]
+              properties:
+                aadhaarNumber:
+                  type: string
+                  pattern: '^[2-9][0-9]{11}$'
+      responses:
+        '200':
+          description: OTP sent
+  /api/auth/aadhaar/verify-otp:
+    post:
+      summary: Verify Aadhaar OTP and return identity token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [aadhaarNumber, otp]
+              properties:
+                aadhaarNumber:
+                  type: string
+                otp:
+                  type: string
+      responses:
+        '200':
+          description: Identity verified
+  /api/registrations:
+    post:
+      summary: Create land registration request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                [parcelId, sellerName, buyerName, registrationRef, deedHash, verifiedIdentityToken]
+              properties:
+                parcelId:
+                  type: string
+                sellerName:
+                  type: string
+                buyerName:
+                  type: string
+                registrationRef:
+                  type: string
+                deedHash:
+                  type: string
+                verifiedIdentityToken:
+                  type: string
+      responses:
+        '201':
+          description: Submitted
+  /api/public/verify/{registrationRef}:
+    get:
+      summary: Public verification for registration reference
+      parameters:
+        - in: path
+          name: registrationRef
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Verification payload

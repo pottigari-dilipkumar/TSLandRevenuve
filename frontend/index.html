@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Land Revenue Registration Portal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Land Registration + Aadhaar OTP (Demo)</h1>
+    <section>
+      <h2>1) Aadhaar OTP Authentication</h2>
+      <input id="aadhaar" placeholder="Aadhaar Number (12 digits)" />
+      <button id="sendOtp">Send OTP</button>
+      <div id="otpPanel" class="hidden">
+        <input id="otp" placeholder="Enter OTP" />
+        <button id="verifyOtp">Verify OTP</button>
+      </div>
+      <p id="otpMessage"></p>
+      <p id="token"></p>
+    </section>
+
+    <section>
+      <h2>2) Submit Registration</h2>
+      <input id="parcelId" placeholder="Parcel ID" />
+      <input id="sellerName" placeholder="Seller Name" />
+      <input id="buyerName" placeholder="Buyer Name" />
+      <input id="registrationRef" placeholder="Registration Reference" />
+      <input id="deedHash" placeholder="Deed Hash" />
+      <button id="submitRegistration">Submit Registration</button>
+      <pre id="registrationResult"></pre>
+    </section>
+
+    <section>
+      <h2>3) Public Verify</h2>
+      <input id="verifyRef" placeholder="Registration Reference" />
+      <button id="verifyRegistration">Verify</button>
+      <pre id="verifyResult"></pre>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
