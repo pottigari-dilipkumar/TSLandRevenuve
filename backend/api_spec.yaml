@@ -1,0 +1,58 @@
+openapi: 3.0.3
+info:
+  title: Land Revenue Platform API
+  version: 0.3.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/platform/auth/sign-in:
+    post:
+      summary: Sign in and trigger 2FA OTP
+  /api/platform/auth/verify-2fa:
+    post:
+      summary: Verify 2FA OTP and return role/session
+  /api/platform/users:
+    get:
+      summary: List system users (Admin, SRO, USER)
+  /api/platform/lands:
+    post:
+      summary: Register land with polygon coordinates and overlap validation
+    get:
+      summary: List lands
+  /api/platform/lands/{landId}:
+    get:
+      summary: Get land details
+      parameters:
+        - in: path
+          name: landId
+          required: true
+          schema:
+            type: string
+  /api/platform/lands/{landId}/history:
+    get:
+      summary: Get land history events
+      parameters:
+        - in: path
+          name: landId
+          required: true
+          schema:
+            type: string
+  /api/platform/lands/{landId}/documents/{documentId}/download:
+    get:
+      summary: Download legal document for buyer/seller portal
+      parameters:
+        - in: path
+          name: landId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: documentId
+          required: true
+          schema:
+            type: string
+  /api/platform/notifications/config:
+    get:
+      summary: Get notification setup (email/sms)
+    post:
+      summary: Update notification setup (email/sms)
