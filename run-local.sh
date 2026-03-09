@@ -7,8 +7,8 @@ echo "Starting backend (Spring Boot) in background..."
 (cd "$ROOT_DIR/app-backend" && mvn spring-boot:run) &
 BACKEND_PID=$!
 
-echo "Starting Angular frontend in background..."
-(cd "$ROOT_DIR/angular-frontend" && npm install && npm start) &
+echo "Starting frontend (python http.server) in background..."
+(cd "$ROOT_DIR/frontend" && python3 -m http.server 8081) &
 FRONTEND_PID=$!
 
 cleanup() {
@@ -18,7 +18,7 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-echo "Frontend: http://localhost:4200"
+echo "Frontend: http://localhost:8081"
 echo "Backend : http://localhost:8080"
 echo "Press Ctrl+C to stop."
 

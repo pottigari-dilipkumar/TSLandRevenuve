@@ -1,38 +1,94 @@
-# India Land Revenue & Registration System (Spring Boot + Angular + Docker)
+# India Land Revenue & Registration System (Java + Frontend + Docker)
 
-## Description
+This project now includes a **working full-stack starter application** with:
+- **Backend:** Java Spring Boot REST API
+- **Frontend:** Simple web app for Aadhaar OTP flow + registration submission
+- **Containers:** Dockerfiles + docker-compose for one-command startup
 
-This project is a full-stack starter for land registration workflows with role-based operations for **Admin**, **SRO**, and **Regular User (Buyer/Seller)**. It includes:
-- Spring Boot backend APIs
-- Angular frontend interface
-- 2FA sign-in flow
-- Land registration with geolocation polygon validation to prevent overlapping registrations
-- Land history tracking
-- Legal document download endpoint
-- Notification settings for email/SMS
+> Important: Aadhaar OTP in this repository is a **demo/mock flow** for development only. Production use must integrate with legally compliant UIDAI-authorized services and follow Indian regulations.
 
-> Aadhaar/OTP and 2FA are demo-mode implementations for development. Production must use compliant identity providers and approved gateways.
+## Tech Stack
 
-## User Roles
-- **Admin**: user management view, notification setup
-- **SRO**: executes registration and land creation workflows
-- **Regular User**: buyer/seller portal for land details, history, and document download
+- Java 17 + Spring Boot 3 (backend)
+- HTML/CSS/JavaScript (frontend)
+- Docker + Docker Compose
 
-## Key Functional Scope
-1. **2FA on sign-in** for all users
-2. **Land detail capture** including seller, buyer, village, survey number
-3. **Geo-coordinate polygon validation** to block overlapping land registration
-4. **Land history timeline** retrieval
-5. **Map-ready coordinate interface** in Angular UI
-6. **Legal document download** from user portal
-7. **Email/SMS notification setup** for application events
+## Features Implemented
+
+1. **Aadhaar OTP Authentication (Demo)**
+   - `POST /api/auth/aadhaar/send-otp`
+   - `POST /api/auth/aadhaar/verify-otp`
+   - Returns a short-lived `verifiedIdentityToken`
+
+2. **Land Registration API**
+   - `POST /api/registrations`
+   - Requires `verifiedIdentityToken` from OTP verification
+
+3. **Public Registration Verification**
+   - `GET /api/public/verify/{registrationRef}`
+
+4. **Frontend Integration**
+   - Send OTP, verify OTP, submit registration, verify registration reference
+
+## Folder Structure
+
+- `app-backend/` Spring Boot service
+- `frontend/` static frontend app served by nginx
+- `docker-compose.yml` runs frontend + backend
+- `smart-contracts/` and `backend/` earlier blueprint assets retained
 
 ## Run with Docker
+
 ```bash
 docker compose up --build
 ```
-- Backend: `http://localhost:8080`
-- Angular frontend: `http://localhost:4200`
 
-## Local run
-See `LOCAL_RUN.md`.
+Then open:
+- Frontend: `http://localhost:8081`
+- Backend: `http://localhost:8080`
+
+## Example API Calls
+
+### 1) Send Aadhaar OTP (Demo)
+```bash
+curl -X POST http://localhost:8080/api/auth/aadhaar/send-otp \
+  -H "Content-Type: application/json" \
+  -d '{"aadhaarNumber":"234567890123"}'
+```
+
+### 2) Verify OTP
+```bash
+curl -X POST http://localhost:8080/api/auth/aadhaar/verify-otp \
+  -H "Content-Type: application/json" \
+  -d '{"aadhaarNumber":"234567890123","otp":"123456"}'
+```
+
+### 3) Submit Registration
+```bash
+curl -X POST http://localhost:8080/api/registrations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "parcelId":"PCL-1001",
+    "sellerName":"Ravi Kumar",
+    "buyerName":"Anita Sharma",
+    "registrationRef":"REG-2026-0001",
+    "deedHash":"0xabc123",
+    "verifiedIdentityToken":"<token-from-verify-otp>"
+  }'
+```
+
+## Production Notes
+
+For real deployment in India:
+- Replace mock OTP with authorized identity/KYC integrations.
+- Add persistent DB (PostgreSQL), migrations, and secure secrets handling.
+- Integrate digital signatures, audit trails, and role-based access controls.
+- Align with Registration Act, state land revenue procedures, and DPDP requirements.
+## Local (Non-Docker) Run
+
+Please use `LOCAL_RUN.md` for step-by-step local setup and testing commands.
+
+Quick start:
+```bash
+./run-local.sh
+```

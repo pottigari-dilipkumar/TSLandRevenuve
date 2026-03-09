@@ -1,58 +1,81 @@
 openapi: 3.0.3
 info:
-  title: Land Revenue Platform API
-  version: 0.3.0
+  title: Land Revenue & Registration API
+  version: 0.2.0
 servers:
   - url: http://localhost:8080
 paths:
-  /api/platform/auth/sign-in:
+  /api/auth/aadhaar/send-otp:
     post:
-      summary: Sign in and trigger 2FA OTP
-  /api/platform/auth/verify-2fa:
+      summary: Send OTP for Aadhaar authentication (demo)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [aadhaarNumber]
+              properties:
+                aadhaarNumber:
+                  type: string
+                  pattern: '^[2-9][0-9]{11}$'
+      responses:
+        '200':
+          description: OTP sent
+  /api/auth/aadhaar/verify-otp:
     post:
-      summary: Verify 2FA OTP and return role/session
-  /api/platform/users:
-    get:
-      summary: List system users (Admin, SRO, USER)
-  /api/platform/lands:
+      summary: Verify Aadhaar OTP and return identity token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [aadhaarNumber, otp]
+              properties:
+                aadhaarNumber:
+                  type: string
+                otp:
+                  type: string
+      responses:
+        '200':
+          description: Identity verified
+  /api/registrations:
     post:
-      summary: Register land with polygon coordinates and overlap validation
+      summary: Create land registration request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                [parcelId, sellerName, buyerName, registrationRef, deedHash, verifiedIdentityToken]
+              properties:
+                parcelId:
+                  type: string
+                sellerName:
+                  type: string
+                buyerName:
+                  type: string
+                registrationRef:
+                  type: string
+                deedHash:
+                  type: string
+                verifiedIdentityToken:
+                  type: string
+      responses:
+        '201':
+          description: Submitted
+  /api/public/verify/{registrationRef}:
     get:
-      summary: List lands
-  /api/platform/lands/{landId}:
-    get:
-      summary: Get land details
+      summary: Public verification for registration reference
       parameters:
         - in: path
-          name: landId
+          name: registrationRef
           required: true
           schema:
             type: string
-  /api/platform/lands/{landId}/history:
-    get:
-      summary: Get land history events
-      parameters:
-        - in: path
-          name: landId
-          required: true
-          schema:
-            type: string
-  /api/platform/lands/{landId}/documents/{documentId}/download:
-    get:
-      summary: Download legal document for buyer/seller portal
-      parameters:
-        - in: path
-          name: landId
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: documentId
-          required: true
-          schema:
-            type: string
-  /api/platform/notifications/config:
-    get:
-      summary: Get notification setup (email/sms)
-    post:
-      summary: Update notification setup (email/sms)
+      responses:
+        '200':
+          description: Verification payload
