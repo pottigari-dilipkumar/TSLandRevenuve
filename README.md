@@ -46,6 +46,20 @@ docker compose up --build
 Then open:
 - Frontend: `http://localhost:8081`
 - Backend: `http://localhost:8080`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- Swagger UI (all endpoints): `http://localhost:8080/swagger-ui/index.html`
+
+## API Documentation (OpenAPI / Swagger)
+
+This project now exposes OpenAPI specs from the backend so integrators can discover and test all available endpoints after startup.
+
+- **Machine-readable spec (JSON):** `http://localhost:8080/v3/api-docs`
+- **Interactive docs (Swagger UI):** `http://localhost:8080/swagger-ui/index.html`
+
+You can use Swagger UI to:
+- Browse every endpoint, request body, and response schema.
+- Try API calls directly from the browser.
+- Share endpoint contracts with integration teams.
 
 ## Example API Calls
 
