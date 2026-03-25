@@ -16,3 +16,14 @@ springdoc:
 jwt:
   secret: ${JWT_SECRET:ReplaceWithASecretKeyOfAtLeast32Characters}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+landregistry:
+  blockchain:
+    enabled: ${LANDREGISTRY_BLOCKCHAIN_ENABLED:false}
+    rpc-url: ${LANDREGISTRY_BLOCKCHAIN_RPC_URL:http://localhost:8545}
+    chain-id: ${LANDREGISTRY_BLOCKCHAIN_CHAIN_ID:1337}
+    contract-address: ${LANDREGISTRY_BLOCKCHAIN_CONTRACT_ADDRESS:}
+    registrar-private-key: ${LANDREGISTRY_BLOCKCHAIN_REGISTRAR_PRIVATE_KEY:}
+    gas-limit: ${LANDREGISTRY_BLOCKCHAIN_GAS_LIMIT:250000}
+    polling-interval-ms: ${LANDREGISTRY_BLOCKCHAIN_POLLING_INTERVAL_MS:1500}
+    receipt-attempts: ${LANDREGISTRY_BLOCKCHAIN_RECEIPT_ATTEMPTS:40}

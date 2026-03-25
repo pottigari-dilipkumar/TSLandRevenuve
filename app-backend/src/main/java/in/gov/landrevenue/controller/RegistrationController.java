@@ -38,4 +38,14 @@ public class RegistrationController {
     public RegistrationRecord verifyRegistration(@PathVariable String registrationRef) {
         return registrationService.findByReference(registrationRef);
     }
+
+    @PostMapping("/registrations/{registrationRef}/blockchain/sync")
+    public RegistrationRecord retryBlockchainSync(@PathVariable String registrationRef) {
+        return registrationService.retryBlockchainSync(registrationRef);
+    }
+
+    @GetMapping("/registrations/blockchain/health")
+    public String blockchainHealth() {
+        return registrationService.blockchainHealthy() ? "UP" : "DOWN";
+    }
 }

@@ -187,7 +187,8 @@ Requires a valid `verifiedIdentityToken` from OTP flow.
   "buyerName": "Anita Sharma",
   "registrationRef": "REG-2026-0001",
   "deedHash": "0xabc123",
-  "verifiedIdentityToken": "<token>"
+  "verifiedIdentityToken": "<token>",
+  "ownerWalletAddress": "0x1111111111111111111111111111111111111111"
 }
 ```
 
@@ -201,12 +202,24 @@ Requires a valid `verifiedIdentityToken` from OTP flow.
   "deedHash": "0xabc123",
   "verifiedIdentityToken": "<token>",
   "createdAt": "2026-03-25T12:00:00Z",
-  "status": "SUBMITTED"
+  "ownerWalletAddress": "0x1111111111111111111111111111111111111111",
+  "status": "SUBMITTED",
+  "blockchainSyncStatus": "SYNCED",
+  "blockchainTxHash": "0x....",
+  "blockchainBlockNumber": 512233,
+  "blockchainSyncedAt": "2026-03-25T12:00:03Z",
+  "blockchainErrorMessage": null
 }
 ```
 
 ##### `GET /api/public/verify/{registrationRef}`
 Returns the same `RegistrationRecord` payload.
+
+##### `POST /api/registrations/{registrationRef}/blockchain/sync`
+Retries on-chain anchoring for a registration and returns updated blockchain sync fields.
+
+##### `GET /api/registrations/blockchain/health`
+Returns `UP` when RPC + contract connectivity checks pass, otherwise `DOWN`.
 
 ---
 
@@ -442,6 +455,12 @@ Static URL: `http://localhost:8081`
 | `DB_PASSWORD` | `postgres` | PostgreSQL password |
 | `JWT_SECRET` | `ReplaceWithASecretKeyOfAtLeast32Characters` | JWT signing key |
 | `JWT_EXPIRATION_MS` | `86400000` | JWT expiry in milliseconds |
+| `LANDREGISTRY_BLOCKCHAIN_ENABLED` | `false` | Enables active on-chain anchoring for registrations |
+| `LANDREGISTRY_BLOCKCHAIN_RPC_URL` | `http://localhost:8545` | JSON-RPC endpoint for EVM node |
+| `LANDREGISTRY_BLOCKCHAIN_CHAIN_ID` | `1337` | Chain id used for transaction signing |
+| `LANDREGISTRY_BLOCKCHAIN_CONTRACT_ADDRESS` | `` | Deployed `LandRegistry` contract address |
+| `LANDREGISTRY_BLOCKCHAIN_REGISTRAR_PRIVATE_KEY` | `` | Registrar wallet private key used to submit contract transactions |
+| `LANDREGISTRY_BLOCKCHAIN_GAS_LIMIT` | `250000` | Gas limit for contract writes |
 
 ### Frontend env vars
 

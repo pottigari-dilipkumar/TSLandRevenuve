@@ -30,11 +30,29 @@ public class RegistrationRecordEntity {
     @Column(name = "verified_identity_token", nullable = false)
     private String verifiedIdentityToken;
 
+    @Column(name = "owner_wallet_address")
+    private String ownerWalletAddress;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     @Column(name = "status", nullable = false)
     private String status;
+
+    @Column(name = "blockchain_sync_status", nullable = false)
+    private String blockchainSyncStatus;
+
+    @Column(name = "blockchain_tx_hash")
+    private String blockchainTxHash;
+
+    @Column(name = "blockchain_block_number")
+    private Long blockchainBlockNumber;
+
+    @Column(name = "blockchain_synced_at")
+    private Instant blockchainSyncedAt;
+
+    @Column(name = "blockchain_error_message")
+    private String blockchainErrorMessage;
 
     public String getRegistrationRef() {
         return registrationRef;
@@ -84,6 +102,14 @@ public class RegistrationRecordEntity {
         this.verifiedIdentityToken = verifiedIdentityToken;
     }
 
+    public String getOwnerWalletAddress() {
+        return ownerWalletAddress;
+    }
+
+    public void setOwnerWalletAddress(String ownerWalletAddress) {
+        this.ownerWalletAddress = ownerWalletAddress;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -98,5 +124,45 @@ public class RegistrationRecordEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getBlockchainSyncStatus() {
+        return blockchainSyncStatus;
+    }
+
+    public void setBlockchainSyncStatus(String blockchainSyncStatus) {
+        this.blockchainSyncStatus = blockchainSyncStatus;
+    }
+
+    public String getBlockchainTxHash() {
+        return blockchainTxHash;
+    }
+
+    public void setBlockchainTxHash(String blockchainTxHash) {
+        this.blockchainTxHash = blockchainTxHash;
+    }
+
+    public Long getBlockchainBlockNumber() {
+        return blockchainBlockNumber;
+    }
+
+    public void setBlockchainBlockNumber(Long blockchainBlockNumber) {
+        this.blockchainBlockNumber = blockchainBlockNumber;
+    }
+
+    public Instant getBlockchainSyncedAt() {
+        return blockchainSyncedAt;
+    }
+
+    public void setBlockchainSyncedAt(Instant blockchainSyncedAt) {
+        this.blockchainSyncedAt = blockchainSyncedAt;
+    }
+
+    public String getBlockchainErrorMessage() {
+        return blockchainErrorMessage;
+    }
+
+    public void setBlockchainErrorMessage(String blockchainErrorMessage) {
+        this.blockchainErrorMessage = blockchainErrorMessage;
     }
 }
