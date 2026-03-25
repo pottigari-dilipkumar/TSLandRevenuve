@@ -10,7 +10,13 @@ public record RegistrationRecord(
         String buyerName,
         String deedHash,
         String verifiedIdentityToken,
+        String ownerWalletAddress,
         Instant createdAt,
-        String status
+        String status,
+        String blockchainSyncStatus,
+        String blockchainTxHash,
+        Long blockchainBlockNumber,
+        Instant blockchainSyncedAt,
+        String blockchainErrorMessage
 ) implements Serializable {
 }
