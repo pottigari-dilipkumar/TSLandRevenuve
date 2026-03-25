@@ -78,7 +78,34 @@ export class AppComponent implements OnInit {
   loadUsers() { this.api.getUsers().subscribe(v=>this.users=v); }
   saveNotifications() { this.api.setNotificationsConfig({emailEnabled:this.emailEnabled,smsEnabled:this.smsEnabled}).subscribe(); }
   createLand() {
-    const polygon = JSON.parse(this.polygonJson);
+    let polygon;
+    try {
+      polygon = JSON.parse(this.polygonJson);
+    } catch {
+      this.landMsg = 'Invalid coordinates JSON. Please provide a valid JSON array.';
+      return;
+    }
+
+    if (!Array.isArray(polygon) || polygon.length < 3) {
+      this.landMsg = 'Polygon must be a JSON array with at least 3 coordinate points.';
+      return;
+    }
+
+    const hasInvalidPoint = polygon.some(
+      (point) =>
+        typeof point !== 'object' ||
+        point === null ||
+        typeof point.lat !== 'number' ||
+        Number.isNaN(point.lat) ||
+        typeof point.lng !== 'number' ||
+        Number.isNaN(point.lng)
+    );
+
+    if (hasInvalidPoint) {
+      this.landMsg = 'Each coordinate must include numeric lat and lng values.';
+      return;
+    }
+
     this.api.createLand({landId:this.landId,village:this.village,surveyNumber:this.surveyNumber,seller:this.seller,buyer:this.buyer,polygon,actor:this.username})
       .subscribe({next:()=>this.landMsg='Land registered',error:e=>this.landMsg=e.error?.error||'failed'});
   }
