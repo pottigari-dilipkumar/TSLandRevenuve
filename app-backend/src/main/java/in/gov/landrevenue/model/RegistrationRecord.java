@@ -1,5 +1,6 @@
 package in.gov.landrevenue.model;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 public record RegistrationRecord(
@@ -11,5 +12,5 @@ public record RegistrationRecord(
         String verifiedIdentityToken,
         Instant createdAt,
         String status
-) {
+) implements Serializable {
 }

@@ -1,16 +1,71 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: land-revenue-postgres
+    environment:
+      POSTGRES_DB: land_revenue
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d land_revenue"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: land-revenue-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./app-backend
-    container_name: land-revenue-backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/land_revenue
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      CACHE_TYPE: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JAVA_TOOL_OPTIONS: >-
+        -XX:+UseContainerSupport
+        -XX:InitialRAMPercentage=30
+        -XX:MaxRAMPercentage=75
+        -XX:+UseG1GC
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  nginx-lb:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: land-revenue-nginx-lb
+    depends_on:
+      - backend
     ports:
-      - "8080:8080"
+      - "8080:80"
 
   frontend:
     build:
       context: ./frontend
     container_name: land-revenue-frontend
     depends_on:
-      - backend
+      - nginx-lb
     ports:
       - "8081:80"
+
+volumes:
+  postgres_data:
+  redis_data:
