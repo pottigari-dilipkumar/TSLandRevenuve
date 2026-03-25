@@ -1,108 +1,121 @@
-# India Land Revenue & Registration System (Java + Frontend + Docker)
+# India Land Revenue & Registration System (Scalable Deployment)
 
-This project now includes a **working full-stack starter application** with:
-- **Backend:** Java Spring Boot REST API
-- **Frontend:** Simple web app for Aadhaar OTP flow + registration submission
-- **Containers:** Dockerfiles + docker-compose for one-command startup
+This project now includes a **high-concurrency ready deployment topology** with:
+- Dockerized services
+- Nginx load balancer in front of backend instances
+- Horizontally scalable Spring Boot backend
+- PostgreSQL with tuned HikariCP connection pooling
+- Redis-backed Spring Cache (optional via `CACHE_TYPE`)
 
-> Important: Aadhaar OTP in this repository is a **demo/mock flow** for development only. Production use must integrate with legally compliant UIDAI-authorized services and follow Indian regulations.
+---
 
-## Tech Stack
+## High-Scalability Architecture
 
-- Java 17 + Spring Boot 3 (backend)
-- HTML/CSS/JavaScript (frontend)
-- Docker + Docker Compose
-
-## Features Implemented
-
-1. **Aadhaar OTP Authentication (Demo)**
-   - `POST /api/auth/aadhaar/send-otp`
-   - `POST /api/auth/aadhaar/verify-otp`
-   - Returns a short-lived `verifiedIdentityToken`
-
-2. **Land Registration API**
-   - `POST /api/registrations`
-   - Requires `verifiedIdentityToken` from OTP verification
-
-3. **Public Registration Verification**
-   - `GET /api/public/verify/{registrationRef}`
-
-4. **Frontend Integration**
-   - Send OTP, verify OTP, submit registration, verify registration reference
-
-## Folder Structure
-
-- `app-backend/` Spring Boot service
-- `frontend/` static frontend app served by nginx
-- `docker-compose.yml` runs frontend + backend
-- `smart-contracts/` and `backend/` earlier blueprint assets retained
-
-## Run with Docker
-
-```bash
-docker compose up --build
+```text
+                        +---------------------+
+Users (Web/API Clients) |   Frontend (Nginx)  |  :8081
+----------------------->|  static SPA + /api  |
+                        +----------+----------+
+                                   |
+                                   v
+                        +---------------------+
+                        |   Nginx Load Balancer|  :8080
+                        | (least_conn, keepalive)
+                        +----------+----------+
+                                   |
+                +------------------+------------------+
+                |                  |                  |
+                v                  v                  v
+         +-------------+    +-------------+    +-------------+
+         | Spring Boot |    | Spring Boot |    | Spring Boot |
+         | backend #1  |    | backend #2  |    | backend #3  |
+         +------+------+    +------+------+    +------+------+
+                |                  |                  |
+                +------------------+------------------+
+                                   |
+                    +--------------+--------------+
+                    |                             |
+                    v                             v
+           +-------------------+        +------------------+
+           | PostgreSQL        |        | Redis Cache      |
+           | (system of record)|        | (hot reads cache)|
+           +-------------------+        +------------------+
 ```
 
-Then open:
+### Why this handles high concurrency
+- **Horizontal API scale:** multiple backend containers share incoming requests via Nginx.
+- **Smart load balancing:** `least_conn` reduces tail latency under uneven request load.
+- **DB efficiency:** HikariCP settings prevent connection storms and improve reuse.
+- **Caching:** frequent read paths can be served from Redis to reduce DB/API pressure.
+- **Keepalive + tuned worker connections:** supports a high volume of concurrent clients.
+
+---
+
+## Services in `docker-compose.yml`
+
+- `frontend`: serves UI on `http://localhost:8081`
+- `nginx-lb`: API load balancer on `http://localhost:8080`
+- `backend`: Spring Boot service (scale this service)
+- `postgres`: durable transactional store
+- `redis`: cache store for hot data
+
+---
+
+## Deployment Steps
+
+### 1) Build and start all services
+```bash
+docker compose up -d --build
+```
+
+### 2) Scale backend instances (example: 3)
+```bash
+docker compose up -d --scale backend=3
+```
+
+### 3) Verify scaled backend containers
+```bash
+docker compose ps
+```
+
+You should see multiple `backend` containers (e.g. `backend-1`, `backend-2`, `backend-3`) behind `nginx-lb`.
+
+### 4) Validate load-balanced API
+```bash
+curl http://localhost:8080/api/public/verify/REG-2026-0001
+```
+
+### 5) Access endpoints
 - Frontend: `http://localhost:8081`
-- Backend: `http://localhost:8080`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
-- Swagger UI (all endpoints): `http://localhost:8080/swagger-ui/index.html`
+- Backend through load balancer: `http://localhost:8080`
+- OpenAPI docs: `http://localhost:8080/swagger-ui.html`
 
-## API Documentation (OpenAPI / Swagger)
+---
 
-This project now exposes OpenAPI specs from the backend so integrators can discover and test all available endpoints after startup.
+## Runtime Configuration
 
-- **Machine-readable spec (JSON):** `http://localhost:8080/v3/api-docs`
-- **Interactive docs (Swagger UI):** `http://localhost:8080/swagger-ui/index.html`
+### Database pooling (HikariCP)
+Configured in `application.properties` with env overrides:
+- `DB_POOL_MAX_SIZE` (default `50`)
+- `DB_POOL_MIN_IDLE` (default `10`)
+- `DB_POOL_CONNECTION_TIMEOUT_MS` (default `30000`)
 
-You can use Swagger UI to:
-- Browse every endpoint, request body, and response schema.
-- Try API calls directly from the browser.
-- Share endpoint contracts with integration teams.
+### Cache mode
+- `CACHE_TYPE=redis` for distributed cache
+- `CACHE_TYPE=simple` for local in-memory cache fallback
 
-## Example API Calls
+Redis connection:
+- `REDIS_HOST` (default `localhost`)
+- `REDIS_PORT` (default `6379`)
 
-### 1) Send Aadhaar OTP (Demo)
-```bash
-curl -X POST http://localhost:8080/api/auth/aadhaar/send-otp \
-  -H "Content-Type: application/json" \
-  -d '{"aadhaarNumber":"234567890123"}'
-```
+---
 
-### 2) Verify OTP
-```bash
-curl -X POST http://localhost:8080/api/auth/aadhaar/verify-otp \
-  -H "Content-Type: application/json" \
-  -d '{"aadhaarNumber":"234567890123","otp":"123456"}'
-```
+## Notes for Production Hardening
 
-### 3) Submit Registration
-```bash
-curl -X POST http://localhost:8080/api/registrations \
-  -H "Content-Type: application/json" \
-  -d '{
-    "parcelId":"PCL-1001",
-    "sellerName":"Ravi Kumar",
-    "buyerName":"Anita Sharma",
-    "registrationRef":"REG-2026-0001",
-    "deedHash":"0xabc123",
-    "verifiedIdentityToken":"<token-from-verify-otp>"
-  }'
-```
-
-## Production Notes
-
-For real deployment in India:
-- Replace mock OTP with authorized identity/KYC integrations.
-- Add persistent DB (PostgreSQL), migrations, and secure secrets handling.
-- Integrate digital signatures, audit trails, and role-based access controls.
-- Align with Registration Act, state land revenue procedures, and DPDP requirements.
-## Local (Non-Docker) Run
-
-Please use `LOCAL_RUN.md` for step-by-step local setup and testing commands.
-
-Quick start:
-```bash
-./run-local.sh
-```
+For very high throughput in production, additionally consider:
+- external managed PostgreSQL + read replicas,
+- Redis Sentinel/Cluster,
+- autoscaling via Kubernetes HPA,
+- observability (Prometheus/Grafana, distributed tracing),
+- circuit breakers + rate limiting,
+- stateless auth with shared session/token strategy.
