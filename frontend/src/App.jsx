@@ -25,7 +25,7 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/lands" element={<LandRecordsPage />} />
 
-          <Route element={<ProtectedRoute roles={[ROLES.ADMIN, ROLES.REVENUE_OFFICER, ROLES.DATA_ENTRY]} />}>
+          <Route element={<ProtectedRoute roles={[ROLES.ADMIN, ROLES.DATA_ENTRY]} />}>
             <Route path="/lands/new" element={<LandFormPage />} />
           </Route>
 

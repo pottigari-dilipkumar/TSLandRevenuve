@@ -25,13 +25,13 @@ public class LandRecordController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','REVENUE_OFFICER','DATA_ENTRY','CITIZEN')")
+    @PreAuthorize("hasAnyRole('ADMIN','REVENUE_OFFICER','CITIZEN')")
     public Page<LandRecordResponse> list(Pageable pageable) {
         return landRecordService.list(pageable);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','REVENUE_OFFICER','DATA_ENTRY','CITIZEN')")
+    @PreAuthorize("hasAnyRole('ADMIN','REVENUE_OFFICER','CITIZEN')")
     public LandRecordResponse getById(@PathVariable Long id) {
         return landRecordService.getById(id);
     }
