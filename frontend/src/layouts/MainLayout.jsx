@@ -7,7 +7,7 @@ import { ROLES } from '../utils/roles';
 const allNavItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: Object.values(ROLES) },
   { to: '/lands', label: 'Land Records', icon: FileText, roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER, ROLES.DATA_ENTRY, ROLES.CITIZEN] },
-  { to: '/lands/new', label: 'Add/Edit Land', icon: PlusSquare, roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER, ROLES.DATA_ENTRY] },
+  { to: '/lands/new', label: 'Add/Edit Land', icon: PlusSquare, roles: [ROLES.ADMIN, ROLES.DATA_ENTRY] },
   { to: '/revenue', label: 'Revenue Details', icon: Receipt, roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER] },
   { to: '/users', label: 'User Management', icon: ShieldCheck, roles: [ROLES.ADMIN] },
 ];

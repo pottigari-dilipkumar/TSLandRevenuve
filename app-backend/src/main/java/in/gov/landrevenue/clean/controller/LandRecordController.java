@@ -63,7 +63,7 @@ public class LandRecordController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','REVENUE_OFFICER','DATA_ENTRY','CITIZEN')")
+    @PreAuthorize("hasAnyRole('ADMIN','REVENUE_OFFICER','CITIZEN')")
     public LandRecordResponse getById(@PathVariable Long id) {
         return landRecordService.getById(id);
     }

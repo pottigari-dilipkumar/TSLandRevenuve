@@ -4,6 +4,7 @@ import in.gov.landrevenue.clean.dto.land.LandRecordRequest;
 import in.gov.landrevenue.clean.dto.land.LandRecordResponse;
 import in.gov.landrevenue.clean.entity.LandRecord;
 import in.gov.landrevenue.clean.entity.Owner;
+import in.gov.landrevenue.clean.enums.Role;
 import in.gov.landrevenue.clean.exception.ResourceNotFoundException;
 import in.gov.landrevenue.clean.mapper.LandRevenueMapper;
 import in.gov.landrevenue.clean.repository.LandRecordRepository;
@@ -97,8 +98,29 @@ public class LandRecordService {
     }
 
     public LandRecord findEntity(Long id) {
+        if (isCitizen()) {
+            return landRecordRepository.findByIdAndOwner_NationalId(id, currentUsername())
+                    .orElseThrow(() -> new ResourceNotFoundException("Land record not found for ID: " + id));
+        }
         return landRecordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Land record not found for ID: " + id));
+    }
+
+    private boolean isCitizen() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + Role.CITIZEN.name()));
+    }
+
+    private String currentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new ResourceNotFoundException("Unauthenticated user");
+        }
+        return authentication.getName();
     }
 
     private void mapRequest(LandRecord landRecord, LandRecordRequest request, Owner owner) {
