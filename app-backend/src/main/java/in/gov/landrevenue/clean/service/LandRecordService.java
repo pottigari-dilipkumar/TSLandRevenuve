@@ -4,6 +4,7 @@ import in.gov.landrevenue.clean.dto.land.LandRecordRequest;
 import in.gov.landrevenue.clean.dto.land.LandRecordResponse;
 import in.gov.landrevenue.clean.entity.LandRecord;
 import in.gov.landrevenue.clean.entity.Owner;
+import in.gov.landrevenue.clean.enums.Role;
 import in.gov.landrevenue.clean.exception.ResourceNotFoundException;
 import in.gov.landrevenue.clean.mapper.LandRevenueMapper;
 import in.gov.landrevenue.clean.repository.LandRecordRepository;
@@ -12,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -38,6 +41,9 @@ public class LandRecordService {
     }
 
     public Page<LandRecordResponse> list(Pageable pageable) {
+        if (isCitizen()) {
+            return landRecordRepository.findAllByOwner_NationalId(currentUsername(), pageable).map(mapper::toLandResponse);
+        }
         return landRecordRepository.findAll(pageable).map(mapper::toLandResponse);
     }
 
@@ -63,8 +69,29 @@ public class LandRecordService {
     }
 
     public LandRecord findEntity(Long id) {
+        if (isCitizen()) {
+            return landRecordRepository.findByIdAndOwner_NationalId(id, currentUsername())
+                    .orElseThrow(() -> new ResourceNotFoundException("Land record not found for ID: " + id));
+        }
         return landRecordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Land record not found for ID: " + id));
+    }
+
+    private boolean isCitizen() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + Role.CITIZEN.name()));
+    }
+
+    private String currentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new ResourceNotFoundException("Unauthenticated user");
+        }
+        return authentication.getName();
     }
 
     private void mapRequest(LandRecord landRecord, LandRecordRequest request, Owner owner) {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Alert from '../components/Alert';
 import { landApi } from '../api/landApi';
 import { useAuthStore } from '../store/authStore';
@@ -18,7 +19,7 @@ export default function LandRecordsPage() {
     const loadData = async () => {
       try {
         const data = await landApi.getLandRecords();
-        const records = Array.isArray(data) ? data : data.records;
+        const records = Array.isArray(data) ? data : data.content || data.records;
         setRows(records?.length ? records : fallback);
       } catch {
         setError('Could not load live land records. Showing sample records.');
@@ -28,11 +29,19 @@ export default function LandRecordsPage() {
     loadData();
   }, []);
 
-  const filteredRows = user?.role === ROLES.CITIZEN ? rows.filter((row) => row.owner === user.name) : rows;
+  const canCreateOrUpdate = [ROLES.ADMIN, ROLES.DATA_ENTRY].includes(user?.role);
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Land Records</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold">Land Records</h2>
+        {canCreateOrUpdate && (
+          <Link to="/lands/new" className="btn-primary">
+            Add / Edit Land
+          </Link>
+        )}
+      </div>
+      {user?.role === ROLES.CITIZEN && <Alert type="info" message="Showing only land records mapped to your account." />}
       <Alert type="info" message={error} />
       <div className="card overflow-x-auto p-0">
         <table className="min-w-full divide-y divide-slate-200 text-sm">
@@ -46,13 +55,13 @@ export default function LandRecordsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredRows.map((row) => (
+            {rows.map((row) => (
               <tr key={row.id}>
                 <td className="px-4 py-3 font-medium text-brand-700">{row.id}</td>
-                <td className="px-4 py-3">{row.owner}</td>
+                <td className="px-4 py-3">{row.ownerName || row.owner}</td>
                 <td className="px-4 py-3">{row.village}</td>
-                <td className="px-4 py-3">{row.area}</td>
-                <td className="px-4 py-3">{row.status}</td>
+                <td className="px-4 py-3">{row.areaInAcres || row.area}</td>
+                <td className="px-4 py-3">{row.status || 'Available'}</td>
               </tr>
             ))}
           </tbody>
