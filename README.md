@@ -400,6 +400,12 @@ mvn spring-boot:run
 
 Backend URL: `http://localhost:8080`
 
+To pick an environment profile:
+```bash
+cd app-backend
+SPRING_PROFILES_ACTIVE=local mvn spring-boot:run
+```
+
 ### Option B: helper script (backend + static frontend)
 ```bash
 ./run-local.sh
@@ -430,6 +436,7 @@ Static URL: `http://localhost:8081`
 
 | Variable | Default | Description |
 |---|---|---|
+| `SPRING_PROFILES_ACTIVE` | `local` | Active Spring profile (`local`, `dev`, `qa`, `uat`, `preprod`, `prod`, `dr`) |
 | `DB_URL` | `jdbc:postgresql://localhost:5432/land_revenue` | PostgreSQL JDBC URL |
 | `DB_USERNAME` | `postgres` | PostgreSQL username |
 | `DB_PASSWORD` | `postgres` | PostgreSQL password |
