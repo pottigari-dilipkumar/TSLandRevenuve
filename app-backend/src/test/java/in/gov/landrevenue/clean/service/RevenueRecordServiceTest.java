@@ -23,6 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,6 +35,8 @@ class RevenueRecordServiceTest {
     private LandRecordService landRecordService;
     @Mock
     private LandRevenueMapper mapper;
+    @Mock
+    private AuditLogService auditLogService;
 
     @InjectMocks
     private RevenueRecordService revenueRecordService;
@@ -91,12 +94,14 @@ class RevenueRecordServiceTest {
         record.setPaymentDate(LocalDate.of(2026, 2, 1));
         record.setPaymentReference("R-1");
 
-        when(revenueRecordRepository.findAll(PageRequest.of(0, 20))).thenReturn(new PageImpl<>(List.of(record)));
+        when(revenueRecordRepository.findAll(any(), eq(PageRequest.of(0, 20)))).thenReturn(new PageImpl<>(List.of(record)));
         when(mapper.toRevenueResponse(record)).thenReturn(
                 new RevenueRecordResponse(1L, new BigDecimal("200.00"), LocalDate.of(2026, 2, 1), "R-1", 9L)
         );
 
-        Page<RevenueRecordResponse> result = revenueRecordService.list(PageRequest.of(0, 20));
+        Page<RevenueRecordResponse> result = revenueRecordService.list(
+                null, null, null, null, null, null, PageRequest.of(0, 20)
+        );
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).paymentReference()).isEqualTo("R-1");
