@@ -53,7 +53,8 @@ public class BlockchainRegistrationGateway {
             return BlockchainAnchorResult.failed("Blockchain configuration is incomplete");
         }
 
-        try (Web3j web3j = Web3j.build(new HttpService(properties.getRpcUrl()))) {
+        Web3j web3j = Web3j.build(new HttpService(properties.getRpcUrl()));
+        try {
             Credentials credentials = Credentials.create(properties.getRegistrarPrivateKey());
             RawTransactionManager txManager = new RawTransactionManager(
                     web3j,
@@ -102,6 +103,8 @@ public class BlockchainRegistrationGateway {
             );
         } catch (Exception ex) {
             return BlockchainAnchorResult.failed(ex.getMessage());
+        } finally {
+            web3j.shutdown();
         }
     }
 
@@ -110,12 +113,15 @@ public class BlockchainRegistrationGateway {
             return false;
         }
 
-        try (Web3j web3j = Web3j.build(new HttpService(properties.getRpcUrl()))) {
+        Web3j web3j = Web3j.build(new HttpService(properties.getRpcUrl()));
+        try {
             web3j.ethBlockNumber().send();
             web3j.ethGetBalance(properties.getContractAddress(), DefaultBlockParameterName.LATEST).send();
             return true;
         } catch (Exception ex) {
             return false;
+        } finally {
+            web3j.shutdown();
         }
     }
 
