@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -94,7 +95,7 @@ class RevenueRecordServiceTest {
         record.setPaymentDate(LocalDate.of(2026, 2, 1));
         record.setPaymentReference("R-1");
 
-        when(revenueRecordRepository.findAll(any(), eq(PageRequest.of(0, 20)))).thenReturn(new PageImpl<>(List.of(record)));
+        when(revenueRecordRepository.findAll(org.mockito.ArgumentMatchers.<Specification<RevenueRecord>>any(), eq(PageRequest.of(0, 20)))).thenReturn(new PageImpl<>(List.of(record)));
         when(mapper.toRevenueResponse(record)).thenReturn(
                 new RevenueRecordResponse(1L, new BigDecimal("200.00"), LocalDate.of(2026, 2, 1), "R-1", 9L)
         );

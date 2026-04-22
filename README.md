@@ -1,15 +1,45 @@
 # Land Revenue & Registration System
 
-A multi-module repository containing:
+This repository contains a working local prototype for land records, revenue collection, Aadhaar-style identity verification, and registration flows with optional blockchain anchoring.
 
-- **Spring Boot backend** (`app-backend/`) with:
-  - Clean architecture land/revenue APIs (`/api/auth`, `/api/owners`, `/api/lands`, `/api/revenues`)
-  - Aadhaar OTP demo flow (`/api/auth/aadhaar/*`)
-  - Registration demo flow (`/api/registrations`, `/api/public/verify/*`)
-  - Platform simulation APIs (`/api/platform/*`)
-- **React frontend** (`frontend/`) built with Vite + Tailwind
-- **Legacy blueprint artifacts** (`backend/api_spec.yaml`, `backend/schema.sql`)
-- **Smart contract artifact** (`smart-contracts/LandRegistry.sol`)
+Main modules:
+
+- **Spring Boot backend** (`app-backend/`)
+  - JWT-secured land and revenue APIs
+  - owner, land record, revenue record, dashboard, and audit endpoints
+  - Aadhaar OTP demo flow
+  - registration verification flow
+  - optional blockchain anchoring support for registrations
+- **React frontend** (`frontend/`)
+  - Vite + React + Tailwind UI
+  - login, dashboard, land records, revenue details, and protected routing
+- **Reference artifacts**
+  - `backend/api_spec.yaml`
+  - `backend/schema.sql`
+  - `smart-contracts/LandRegistry.sol`
+
+---
+
+## 0) What This Project Does
+
+The project combines three backend capability groups in one runtime:
+
+1. **Core land and revenue management**
+   - manage owners
+   - create and search land records
+   - record revenue payments
+   - view dashboard summaries and revenue trends
+
+2. **Registration and identity demo flow**
+   - send demo Aadhaar OTP
+   - verify OTP and issue a temporary identity token
+   - submit and verify a registration record
+
+3. **Platform simulation**
+   - simulate internal registration workflows, documents, and notification settings
+   - support geometry validation and demo land parcel history
+
+For local use, the backend and frontend are enough to explore the main flows. Blockchain integration is included in the backend, but it is disabled by default in the local profile.
 
 ---
 
@@ -389,7 +419,7 @@ frontend/
 - `src/components/ProtectedRoute.jsx`: auth and role guard.
 - `src/layouts/AuthLayout.jsx`: public auth page shell.
 - `src/layouts/MainLayout.jsx`: authenticated shell, sidebar nav, logout.
-- `src/store/authStore.js`: persisted auth state, login/register actions.
+- `src/store/authStore.js`: persisted auth state and login handling.
 - `src/api/client.js`: Axios client with bearer-token interceptor.
 - `src/pages/DashboardPage.jsx`: KPI cards + revenue trend chart (with fallback data).
 - `src/pages/LandRecordsPage.jsx`: land table view (with fallback data).
@@ -397,69 +427,91 @@ frontend/
 - `src/pages/RevenueDetailsPage.jsx`: revenue summary cards.
 - `src/pages/UserManagementPage.jsx`: user table.
 
-> Note: some frontend calls (`/auth/register`, `/dashboard/stats`, `/revenue/trend`, `/revenue`, `/users`) are UI placeholders and may require backend alignment.
-
 ---
 
 ## 3) Setup
 
-## 3.1 How to run backend
+## 3.1 Local prerequisites
+
+- Java 17
+- Maven 3.9+
+- Node.js 18+ and npm
+- PostgreSQL running locally
+- Redis running locally
+
+Local backend values are already pinned in `app-backend/src/main/resources/application-local.yml`:
+
+- PostgreSQL database: `land_revenue`
+- PostgreSQL username: `postgres`
+- PostgreSQL password: `postgres`
+- Redis host: `localhost`
+- Redis port: `6379`
+- Blockchain integration: disabled by default for local runs
+
+If your shell defaults to Java 11, use Java 17 explicitly:
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+export PATH="$JAVA_HOME/bin:$PATH"
+java -version
+```
+
+## 3.2 How to run backend
 
 ### Option A: Maven
 ```bash
 cd app-backend
-mvn spring-boot:run
+JAVA_HOME=$(/usr/libexec/java_home -v 17) PATH=$(/usr/libexec/java_home -v 17)/bin:$PATH mvn spring-boot:run
 ```
 
 Backend URL: `http://localhost:8080`
 
-To pick an environment profile:
-```bash
-cd app-backend
-SPRING_PROFILES_ACTIVE=local mvn spring-boot:run
-```
+Useful backend URLs:
 
-### Option B: helper script (backend + static frontend)
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/api-docs`
+
+### Option B: helper script (backend + Vite frontend)
 ```bash
 ./run-local.sh
 ```
 
-## 3.2 How to run frontend
+## 3.3 How to run frontend
 
 ### Dev mode (Vite)
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
 Vite URL: `http://localhost:5173`
 
-### Static mode
-```bash
-cd frontend
-python3 -m http.server 8081
-```
+The frontend talks to the backend at `http://localhost:8080/api` by default.
 
-Static URL: `http://localhost:8081`
+Login with the seeded backend users:
 
-## 3.3 Environment variables
+- `admin / admin123`
+- `officer / officer123`
+- `entry / entry123`
+- `citizen / citizen123`
+
+Note: the login form uses **username**, not email.
+
+## 3.4 Environment variables
 
 ### Backend env vars
 
 | Variable | Default | Description |
 |---|---|---|
 | `SPRING_PROFILES_ACTIVE` | `local` | Active Spring profile (`local`, `dev`, `qa`, `uat`, `preprod`, `prod`, `dr`) |
-| `DB_URL` | `jdbc:postgresql://localhost:5432/land_revenue` | PostgreSQL JDBC URL |
-| `DB_USERNAME` | `postgres` | PostgreSQL username |
-| `DB_PASSWORD` | `postgres` | PostgreSQL password |
 | `JWT_SECRET` | `ReplaceWithASecretKeyOfAtLeast32Characters` | JWT signing key |
 | `JWT_EXPIRATION_MS` | `86400000` | JWT expiry in milliseconds |
 | `LANDREGISTRY_BLOCKCHAIN_ENABLED` | `false` | Enables active on-chain anchoring for registrations |
 | `LANDREGISTRY_BLOCKCHAIN_RPC_URL` | `http://localhost:8545` | JSON-RPC endpoint for EVM node |
 | `LANDREGISTRY_BLOCKCHAIN_CHAIN_ID` | `1337` | Chain id used for transaction signing |
-| `LANDREGISTRY_BLOCKCHAIN_CONTRACT_ADDRESS` | `` | Deployed `LandRegistry` contract address |
-| `LANDREGISTRY_BLOCKCHAIN_REGISTRAR_PRIVATE_KEY` | `` | Registrar wallet private key used to submit contract transactions |
+| `LANDREGISTRY_BLOCKCHAIN_CONTRACT_ADDRESS` | configured in non-local environments or when explicitly enabled | Deployed `LandRegistry` contract address |
+| `LANDREGISTRY_BLOCKCHAIN_REGISTRAR_PRIVATE_KEY` | configured in non-local environments or when explicitly enabled | Registrar wallet private key used to submit contract transactions |
 | `LANDREGISTRY_BLOCKCHAIN_GAS_LIMIT` | `250000` | Gas limit for contract writes |
 
 ### Frontend env vars
@@ -467,11 +519,6 @@ Static URL: `http://localhost:8081`
 | Variable | Default | Description |
 |---|---|---|
 | `VITE_API_BASE_URL` | `http://localhost:8080/api` | Axios API base URL |
-
-Example `.env` for frontend:
-```bash
-VITE_API_BASE_URL=http://localhost:8080/api
-```
 
 ---
 
@@ -517,4 +564,4 @@ Recommended for production hardening:
 
 - `backend/api_spec.yaml` documents legacy Aadhaar/registration APIs.
 - `backend/schema.sql` contains expanded conceptual schema.
-- `angular-frontend/` exists in repository but current primary UI is `frontend/` React app.
+- Local profile values are intentionally concrete to simplify setup and testing.

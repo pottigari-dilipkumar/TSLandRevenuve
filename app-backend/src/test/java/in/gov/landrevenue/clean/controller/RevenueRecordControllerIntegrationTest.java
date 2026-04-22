@@ -8,6 +8,8 @@ import in.gov.landrevenue.clean.exception.GlobalExceptionHandler;
 import in.gov.landrevenue.clean.exception.ResourceNotFoundException;
 import in.gov.landrevenue.clean.security.JwtAuthenticationFilter;
 import in.gov.landrevenue.clean.service.RevenueRecordService;
+import jakarta.servlet.FilterChain;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,6 +26,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -47,10 +52,19 @@ class RevenueRecordControllerIntegrationTest {
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @BeforeEach
+    void passThroughJwtFilter() throws Exception {
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(), any(), any());
+    }
+
     @Test
     void list_shouldReturnUnauthorized_whenNoAuth() throws Exception {
         mockMvc.perform(get("/api/revenues"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -116,7 +130,7 @@ class RevenueRecordControllerIntegrationTest {
     @Test
     @WithMockUser(roles = "CITIZEN")
     void list_shouldReturnRecords_forCitizen() throws Exception {
-        when(revenueRecordService.list(any())).thenReturn(new PageImpl<>(List.of(
+        when(revenueRecordService.list(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(
                 new RevenueRecordResponse(1L, new BigDecimal("90.00"), LocalDate.of(2026, 1, 1), "R-REF", 7L)
         )));
 

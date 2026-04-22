@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/authStore';
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, isLoading, error, clearError } = useAuthStore();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ username: '', password: '' });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,8 +23,14 @@ export default function LoginPage() {
     <form className="space-y-4" onSubmit={handleSubmit}>
       <Alert message={error} />
       <div>
-        <label className="mb-1 block text-sm font-medium">Email</label>
-        <input className="input" type="email" required value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} />
+        <label className="mb-1 block text-sm font-medium">Username</label>
+        <input
+          className="input"
+          type="text"
+          required
+          value={form.username}
+          onChange={(e) => setForm((prev) => ({ ...prev, username: e.target.value }))}
+        />
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium">Password</label>

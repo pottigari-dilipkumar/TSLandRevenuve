@@ -8,6 +8,8 @@ import in.gov.landrevenue.clean.exception.GlobalExceptionHandler;
 import in.gov.landrevenue.clean.exception.ResourceNotFoundException;
 import in.gov.landrevenue.clean.security.JwtAuthenticationFilter;
 import in.gov.landrevenue.clean.service.AuthService;
+import jakarta.servlet.FilterChain;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,6 +19,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,6 +42,15 @@ class AuthControllerIntegrationTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @BeforeEach
+    void passThroughJwtFilter() throws Exception {
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(), any(), any());
+    }
 
     @Test
     void login_shouldSucceed_withoutAuthenticationHeader() throws Exception {

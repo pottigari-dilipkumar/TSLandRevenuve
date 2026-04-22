@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -76,7 +77,7 @@ class LandRecordServiceTest {
         Owner owner = owner(1L, "Meera");
         LandRecord record = landRecord(5L, "SN-5", owner);
         PageRequest pageable = PageRequest.of(0, 10);
-        when(landRecordRepository.findAll(any(), eq(pageable))).thenReturn(new PageImpl<>(List.of(record)));
+        when(landRecordRepository.findAll(org.mockito.ArgumentMatchers.<Specification<LandRecord>>any(), eq(pageable))).thenReturn(new PageImpl<>(List.of(record)));
         when(mapper.toLandResponse(record)).thenReturn(
                 new LandRecordResponse(5L, "SN-5", "Hyderabad", "Madhapur", new BigDecimal("2.00"), 1L, "Meera")
         );

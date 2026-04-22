@@ -8,6 +8,8 @@ import in.gov.landrevenue.clean.exception.GlobalExceptionHandler;
 import in.gov.landrevenue.clean.exception.ResourceNotFoundException;
 import in.gov.landrevenue.clean.security.JwtAuthenticationFilter;
 import in.gov.landrevenue.clean.service.LandRecordService;
+import jakarta.servlet.FilterChain;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,7 +25,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
@@ -48,10 +53,19 @@ class LandRecordControllerIntegrationTest {
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @BeforeEach
+    void passThroughJwtFilter() throws Exception {
+        doAnswer(invocation -> {
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(any(), any(), any());
+    }
+
     @Test
     void list_shouldReturnUnauthorized_whenNoTokenProvided() throws Exception {
         mockMvc.perform(get("/api/lands"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -103,7 +117,7 @@ class LandRecordControllerIntegrationTest {
     @Test
     @WithMockUser(roles = "CITIZEN")
     void list_shouldReturnData_forAuthorizedRole() throws Exception {
-        when(landRecordService.list(any())).thenReturn(new PageImpl<>(List.of(
+        when(landRecordService.list(isNull(), isNull(), isNull(), isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(
                 new LandRecordResponse(3L, "SN-3", "Hyderabad", "Village-A", new BigDecimal("1.00"), 1L, "Owner-1")
         )));
 

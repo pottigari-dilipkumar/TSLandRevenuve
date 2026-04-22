@@ -1,45 +1,95 @@
 # Local Run Instructions
 
-This file explains how to run the project **without Docker** on your local machine.
+This file explains the recommended local setup for the cleaned repository.
 
 ## Prerequisites
 
-- Java 17+
+- Java 17
 - Maven 3.9+
-- Python 3 (for quick static frontend hosting)
-- Optional: Docker + Docker Compose (for containerized run)
+- Node.js 18+ and npm
+- PostgreSQL
+- Redis
+- Optional: Docker + Docker Compose
 
-## 1) Run Backend (Spring Boot)
+## 1) Local services expected by the backend
+
+The local Spring profile uses fixed values from `app-backend/src/main/resources/application-local.yml`.
+
+PostgreSQL:
+- host: `localhost`
+- port: `5432`
+- database: `land_revenue`
+- username: `postgres`
+- password: `postgres`
+
+Redis:
+- host: `localhost`
+- port: `6379`
+
+Blockchain:
+- configured with local defaults
+- disabled by default with `landregistry.blockchain.enabled: false`
+
+Create the local database if needed:
+
+```bash
+createdb land_revenue
+```
+
+## 2) Use Java 17 for this repo
+
+If `java -version` shows Java 11 or something else, set Java 17 before running Maven:
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+export PATH="$JAVA_HOME/bin:$PATH"
+java -version
+```
+
+## 3) Run Backend (Spring Boot)
 
 ```bash
 cd app-backend
-mvn spring-boot:run
+JAVA_HOME=$(/usr/libexec/java_home -v 17) PATH=$(/usr/libexec/java_home -v 17)/bin:$PATH mvn spring-boot:run
 ```
 
 Backend starts at:
 - `http://localhost:8080`
 
-Health check (basic):
-```bash
-curl http://localhost:8080/api/public/verify/test-ref
-```
-(Will return `Registration not found` until data is submitted, which confirms app is reachable.)
+Useful URLs:
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/api-docs`
 
-## 2) Run Frontend (Static App)
+Seeded local users:
+- `admin / admin123`
+- `officer / officer123`
+- `entry / entry123`
+- `citizen / citizen123`
+
+Basic login test:
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+```
+
+## 4) Run Frontend (Vite)
 
 Open a new terminal:
 
 ```bash
 cd frontend
-python3 -m http.server 8081
+npm install
+npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
 Frontend URL:
-- `http://localhost:8081`
+- `http://localhost:5173`
 
-The frontend calls backend at `http://localhost:8080`.
+The frontend calls the backend at `http://localhost:8080/api` by default.
 
-## 3) Test Aadhaar OTP + Registration Flow
+## 5) Test Aadhaar OTP + Registration Flow
 
 ### Send OTP
 ```bash
@@ -78,7 +128,19 @@ curl -X POST http://localhost:8080/api/registrations \
 curl http://localhost:8080/api/public/verify/REG-2026-0001
 ```
 
-## 4) Optional Docker Run
+## 6) Optional helper script
+
+From the repo root:
+
+```bash
+./run-local.sh
+```
+
+This starts:
+- backend on `http://localhost:8080`
+- frontend on `http://localhost:5173`
+
+## 7) Optional Docker Run
 
 ```bash
 docker compose up --build
@@ -91,3 +153,4 @@ docker compose up --build
 
 - Aadhaar OTP here is **demo/mock only** for local development.
 - For production, integrate with legally compliant identity providers and secure OTP delivery channels.
+- If you want to test active blockchain anchoring locally, enable blockchain config and run a local EVM node plus deployed contract.
