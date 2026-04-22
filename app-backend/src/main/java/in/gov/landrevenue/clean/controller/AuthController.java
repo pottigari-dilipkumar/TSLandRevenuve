@@ -2,6 +2,7 @@ package in.gov.landrevenue.clean.controller;
 
 import in.gov.landrevenue.clean.dto.auth.AuthRequest;
 import in.gov.landrevenue.clean.dto.auth.AuthResponse;
+import in.gov.landrevenue.clean.dto.auth.RegisterRequest;
 import in.gov.landrevenue.clean.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,5 +22,10 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody AuthRequest request) {
         return authService.authenticate(request);
+    }
+
+    @PostMapping("/register")
+    public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
+        return authService.register(request);
     }
 }

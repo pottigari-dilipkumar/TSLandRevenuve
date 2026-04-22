@@ -1,4 +1,4 @@
-import { BarChart3, FileText, LayoutDashboard, LogOut, Receipt, ShieldCheck, PlusSquare, Menu } from 'lucide-react';
+import { BarChart3, FileText, LayoutDashboard, LogOut, Receipt, ShieldCheck, PlusSquare, Menu, UserPlus } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
@@ -7,6 +7,7 @@ import { ROLES } from '../utils/roles';
 const allNavItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: Object.values(ROLES) },
   { to: '/lands', label: 'Land Records', icon: FileText, roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER, ROLES.DATA_ENTRY, ROLES.CITIZEN] },
+  { to: '/owners/new', label: 'Create Owner', icon: UserPlus, roles: [ROLES.ADMIN] },
   { to: '/lands/new', label: 'Add/Edit Land', icon: PlusSquare, roles: [ROLES.ADMIN, ROLES.DATA_ENTRY] },
   { to: '/revenue', label: 'Revenue Details', icon: Receipt, roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER] },
   { to: '/users', label: 'User Management', icon: ShieldCheck, roles: [ROLES.ADMIN] },

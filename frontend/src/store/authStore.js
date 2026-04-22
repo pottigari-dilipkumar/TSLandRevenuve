@@ -34,7 +34,14 @@ export const useAuthStore = create(
         set({ isLoading: true, error: null });
         try {
           const data = await authApi.register(payload);
-          set({ user: data.user, token: data.token, isLoading: false });
+          set({
+            user: {
+              username: payload.email,
+              role: data.role,
+            },
+            token: data.token,
+            isLoading: false,
+          });
           return data;
         } catch (error) {
           set({ error: error?.response?.data?.message || 'Unable to register.', isLoading: false });

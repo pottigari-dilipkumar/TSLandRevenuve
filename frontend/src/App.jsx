@@ -7,6 +7,7 @@ import LandFormPage from './pages/LandFormPage';
 import LandRecordsPage from './pages/LandRecordsPage';
 import LoginPage from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
+import OwnerFormPage from './pages/OwnerFormPage';
 import RegisterPage from './pages/RegisterPage';
 import RevenueDetailsPage from './pages/RevenueDetailsPage';
 import UserManagementPage from './pages/UserManagementPage';
@@ -34,6 +35,7 @@ export default function App() {
           </Route>
 
           <Route element={<ProtectedRoute roles={[ROLES.ADMIN]} />}>
+            <Route path="/owners/new" element={<OwnerFormPage />} />
             <Route path="/users" element={<UserManagementPage />} />
           </Route>
         </Route>

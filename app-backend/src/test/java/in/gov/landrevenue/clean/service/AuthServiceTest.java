@@ -2,6 +2,7 @@ package in.gov.landrevenue.clean.service;
 
 import in.gov.landrevenue.clean.dto.auth.AuthRequest;
 import in.gov.landrevenue.clean.dto.auth.AuthResponse;
+import in.gov.landrevenue.clean.dto.auth.RegisterRequest;
 import in.gov.landrevenue.clean.entity.User;
 import in.gov.landrevenue.clean.enums.Role;
 import in.gov.landrevenue.clean.exception.ResourceNotFoundException;
@@ -80,5 +81,30 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.authenticate(new AuthRequest("ghost", "pwd")))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Invalid username or password");
+    }
+
+    @Test
+    void register_shouldCreateCitizenAndReturnToken() {
+        RegisterRequest request = new RegisterRequest("Dilipkumar", "pdilukumar@gmail.com", "VasuD@3013", "ADMIN");
+        when(userRepository.findByUsername("pdilukumar@gmail.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("VasuD@3013")).thenReturn("encoded-password");
+        when(jwtService.generateToken("pdilukumar@gmail.com", "CITIZEN")).thenReturn("jwt-token");
+
+        AuthResponse response = authService.register(request);
+
+        assertThat(response.token()).isEqualTo("jwt-token");
+        assertThat(response.role()).isEqualTo("CITIZEN");
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void register_shouldRejectDuplicateEmail() {
+        User user = new User();
+        user.setUsername("pdilukumar@gmail.com");
+        when(userRepository.findByUsername("pdilukumar@gmail.com")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> authService.register(new RegisterRequest("Dilipkumar", "pdilukumar@gmail.com", "VasuD@3013", "CITIZEN")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("User already exists");
     }
 }

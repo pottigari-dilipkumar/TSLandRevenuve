@@ -2,12 +2,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Alert from '../components/Alert';
 import { useAuthStore } from '../store/authStore';
-import { ROLES } from '../utils/roles';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { register, isLoading, error, clearError } = useAuthStore();
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: ROLES.CITIZEN });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'CITIZEN' });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,11 +36,7 @@ export default function RegisterPage() {
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium">Role</label>
-        <select className="input" value={form.role} onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value }))}>
-          {Object.values(ROLES).map((role) => (
-            <option key={role} value={role}>{role}</option>
-          ))}
-        </select>
+        <input className="input bg-slate-50" value="CITIZEN" disabled readOnly />
       </div>
       <button className="btn-primary w-full" disabled={isLoading}>{isLoading ? 'Creating account...' : 'Create account'}</button>
       <p className="text-center text-sm text-slate-500">

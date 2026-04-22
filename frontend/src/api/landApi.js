@@ -13,6 +13,14 @@ export const landApi = {
     const { data } = await client.get('/lands');
     return data;
   },
+  getOwners: async () => {
+    const { data } = await client.get('/owners');
+    return data;
+  },
+  createOwner: async (payload) => {
+    const { data } = await client.post('/owners', payload);
+    return data;
+  },
   getLandById: async (id) => {
     const { data } = await client.get(`/lands/${id}`);
     return data;

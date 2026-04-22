@@ -2,7 +2,9 @@ package in.gov.landrevenue.clean.service;
 
 import in.gov.landrevenue.clean.dto.auth.AuthRequest;
 import in.gov.landrevenue.clean.dto.auth.AuthResponse;
+import in.gov.landrevenue.clean.dto.auth.RegisterRequest;
 import in.gov.landrevenue.clean.entity.User;
+import in.gov.landrevenue.clean.enums.Role;
 import in.gov.landrevenue.clean.exception.ResourceNotFoundException;
 import in.gov.landrevenue.clean.repository.UserRepository;
 import in.gov.landrevenue.clean.security.JwtService;
@@ -34,6 +36,23 @@ public class AuthService {
 
         String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
         log.info("JWT token generated for user: {}", user.getUsername());
+        return new AuthResponse(token, user.getRole().name());
+    }
+
+    public AuthResponse register(RegisterRequest request) {
+        String username = request.email().trim().toLowerCase();
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new IllegalArgumentException("User already exists with this email");
+        }
+
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setRole(Role.CITIZEN);
+        userRepository.save(user);
+
+        String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
+        log.info("User registered successfully: {}", user.getUsername());
         return new AuthResponse(token, user.getRole().name());
     }
 }

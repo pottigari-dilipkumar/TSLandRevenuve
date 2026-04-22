@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import in.gov.landrevenue.clean.config.SecurityConfig;
 import in.gov.landrevenue.clean.dto.auth.AuthRequest;
 import in.gov.landrevenue.clean.dto.auth.AuthResponse;
+import in.gov.landrevenue.clean.dto.auth.RegisterRequest;
 import in.gov.landrevenue.clean.exception.GlobalExceptionHandler;
 import in.gov.landrevenue.clean.exception.ResourceNotFoundException;
 import in.gov.landrevenue.clean.security.JwtAuthenticationFilter;
@@ -90,5 +91,17 @@ class AuthControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(new AuthRequest("ghost", "wrong"))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Invalid username or password"));
+    }
+
+    @Test
+    void register_shouldSucceed_withoutAuthenticationHeader() throws Exception {
+        when(authService.register(any(RegisterRequest.class))).thenReturn(new AuthResponse("token-456", "CITIZEN"));
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RegisterRequest("Dilipkumar", "pdilukumar@gmail.com", "VasuD@3013", "CITIZEN"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("token-456"))
+                .andExpect(jsonPath("$.role").value("CITIZEN"));
     }
 }
