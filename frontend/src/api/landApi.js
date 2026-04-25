@@ -41,4 +41,8 @@ export const landApi = {
     const { data } = await client.get('/users');
     return data;
   },
+  createUser: async (payload) => {
+    const { data } = await client.post('/users', payload);
+    return data;
+  },
 };

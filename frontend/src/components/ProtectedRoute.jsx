@@ -10,8 +10,11 @@ export default function ProtectedRoute({ roles = [] }) {
   }
 
   if (roles.length > 0 && !roles.includes(user.role)) {
-    // Redirect citizens to their own dashboard
-    const fallback = user.role === ROLES.CITIZEN ? '/citizen/dashboard' : '/dashboard';
+    const sroRoles = [ROLES.SRO, ROLES.SRO_ASSISTANT];
+    const fallback =
+      user.role === ROLES.CITIZEN ? '/citizen/dashboard' :
+      sroRoles.includes(user.role) ? '/registrations' :
+      '/dashboard';
     return <Navigate to={fallback} replace />;
   }
 

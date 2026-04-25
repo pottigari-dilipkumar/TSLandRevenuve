@@ -47,6 +47,7 @@ export default function App() {
           <Route path="/lands" element={<LandRecordsPage />} />
           <Route element={<ProtectedRoute roles={[ROLES.ADMIN, ROLES.DATA_ENTRY]} />}>
             <Route path="/lands/new" element={<LandFormPage />} />
+            <Route path="/lands/:id/edit" element={<LandFormPage />} />
           </Route>
 
           {/* Revenue */}

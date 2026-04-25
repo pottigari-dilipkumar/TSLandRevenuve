@@ -3,6 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import Alert from '../components/Alert';
 import { authApi } from '../api/authApi';
 import { useAuthStore } from '../store/authStore';
+import { ROLES } from '../utils/roles';
+
+function getHomeForRole(role) {
+  if (role === ROLES.CITIZEN) return '/citizen/dashboard';
+  if (role === ROLES.SRO || role === ROLES.SRO_ASSISTANT) return '/registrations';
+  return '/dashboard';
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -20,8 +27,8 @@ export default function LoginPage() {
     e.preventDefault();
     clearError();
     try {
-      await login(form);
-      navigate('/dashboard');
+      const data = await login(form);
+      navigate(getHomeForRole(data.role));
     } catch {
       // handled in store
     }
