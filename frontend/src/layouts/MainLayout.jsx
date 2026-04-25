@@ -1,15 +1,29 @@
-import { BarChart3, FileText, LayoutDashboard, LogOut, Receipt, ShieldCheck, PlusSquare, Menu, UserPlus } from 'lucide-react';
+import {
+  BarChart3, FileText, LayoutDashboard, LogOut, Receipt, ShieldCheck,
+  PlusSquare, Menu, UserPlus, Map, ClipboardList, User, TrendingUp
+} from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { ROLES } from '../utils/roles';
 
 const allNavItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: Object.values(ROLES) },
-  { to: '/lands', label: 'Land Records', icon: FileText, roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER, ROLES.DATA_ENTRY, ROLES.CITIZEN] },
+  // Staff dashboard
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER, ROLES.DATA_ENTRY] },
+  // Citizen dashboard
+  { to: '/citizen/dashboard', label: 'My Dashboard', icon: LayoutDashboard, roles: [ROLES.CITIZEN] },
+  { to: '/citizen/profile', label: 'My Profile', icon: User, roles: [ROLES.CITIZEN] },
+  // Market values (all roles)
+  { to: '/market-values', label: 'Market Values', icon: TrendingUp, roles: Object.values(ROLES) },
+  // Land records (non-citizen staff)
+  { to: '/lands', label: 'Land Records', icon: FileText, roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER, ROLES.DATA_ENTRY] },
   { to: '/owners/new', label: 'Create Owner', icon: UserPlus, roles: [ROLES.ADMIN] },
   { to: '/lands/new', label: 'Add/Edit Land', icon: PlusSquare, roles: [ROLES.ADMIN, ROLES.DATA_ENTRY] },
   { to: '/revenue', label: 'Revenue Details', icon: Receipt, roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER] },
+  // Registrations (SRO / SRO_ASSISTANT / ADMIN)
+  { to: '/registrations', label: 'Registrations', icon: ClipboardList, roles: [ROLES.SRO, ROLES.SRO_ASSISTANT, ROLES.ADMIN, ROLES.REVENUE_OFFICER] },
+  { to: '/registrations/new', label: 'New Registration', icon: PlusSquare, roles: [ROLES.SRO, ROLES.SRO_ASSISTANT, ROLES.ADMIN] },
+  // Admin
   { to: '/users', label: 'User Management', icon: ShieldCheck, roles: [ROLES.ADMIN] },
 ];
 
@@ -25,18 +39,23 @@ export default function MainLayout() {
     navigate('/login');
   };
 
+  const displayName = user?.fullName || user?.username || 'User';
+  const roleLabel = user?.role?.replace('_', ' ') || '';
+
   return (
     <div className="flex min-h-screen bg-slate-100">
       <aside className={`fixed z-40 h-full w-72 bg-slate-900 p-5 text-slate-200 transition-transform lg:static ${open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <h2 className="text-xl font-bold text-white">LRMS Portal</h2>
-        <p className="mt-1 text-xs text-slate-400">{user?.role}</p>
-        <nav className="mt-6 space-y-2">
+        <p className="mt-1 text-xs text-slate-400">{roleLabel}</p>
+        <nav className="mt-6 space-y-1">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               onClick={() => setOpen(false)}
-              className={({ isActive }) => `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${isActive ? 'bg-brand-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${isActive ? 'bg-brand-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`
+              }
             >
               <Icon size={16} />
               {label}
@@ -56,7 +75,7 @@ export default function MainLayout() {
             </button>
             <div>
               <p className="text-xs text-slate-500">Welcome back</p>
-              <h1 className="text-lg font-semibold text-slate-900">{user?.name || 'User'}</h1>
+              <h1 className="text-lg font-semibold text-slate-900">{displayName}</h1>
             </div>
             <BarChart3 className="text-brand-600" />
           </div>

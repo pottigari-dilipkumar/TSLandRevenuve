@@ -4,5 +4,7 @@ public enum Role {
     ADMIN,
     REVENUE_OFFICER,
     DATA_ENTRY,
-    CITIZEN
+    CITIZEN,
+    SRO,
+    SRO_ASSISTANT
 }

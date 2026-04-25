@@ -10,6 +10,6 @@ import java.util.Optional;
 
 public interface LandRecordRepository extends JpaRepository<LandRecord, Long>, JpaSpecificationExecutor<LandRecord> {
     Page<LandRecord> findAllByOwner_NationalId(String nationalId, Pageable pageable);
-
     Optional<LandRecord> findByIdAndOwner_NationalId(Long id, String nationalId);
+    java.util.List<LandRecord> findByOwnerNationalId(String nationalId);
 }

@@ -3,6 +3,21 @@ spring:
     name: land-revenue-backend
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 60MB
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: ${SERVER_PORT:8080}
@@ -16,6 +31,13 @@ springdoc:
 jwt:
   secret: ${JWT_SECRET:ReplaceWithASecretKeyOfAtLeast32Characters}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+app:
+  upload-dir: ${APP_UPLOAD_DIR:./uploads}
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+  notification:
+    from-email: ${NOTIFICATION_FROM_EMAIL:noreply@landrevenue.gov.in}
+    from-name: ${NOTIFICATION_FROM_NAME:Land Revenue System}
 
 landregistry:
   blockchain:

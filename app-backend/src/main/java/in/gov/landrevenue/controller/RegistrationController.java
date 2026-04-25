@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/blockchain")
 public class RegistrationController {
     private final RegistrationService registrationService;
     private final AadhaarAuthService aadhaarAuthService;
@@ -34,7 +34,7 @@ public class RegistrationController {
         return registrationService.create(request);
     }
 
-    @GetMapping("/public/verify/{registrationRef}")
+    @GetMapping("/registrations/verify/{registrationRef}")
     public RegistrationRecord verifyRegistration(@PathVariable String registrationRef) {
         return registrationService.findByReference(registrationRef);
     }

@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { ROLES } from '../utils/roles';
 
 export default function ProtectedRoute({ roles = [] }) {
   const user = useAuthStore((state) => state.user);
@@ -9,7 +10,9 @@ export default function ProtectedRoute({ roles = [] }) {
   }
 
   if (roles.length > 0 && !roles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+    // Redirect citizens to their own dashboard
+    const fallback = user.role === ROLES.CITIZEN ? '/citizen/dashboard' : '/dashboard';
+    return <Navigate to={fallback} replace />;
   }
 
   return <Outlet />;
