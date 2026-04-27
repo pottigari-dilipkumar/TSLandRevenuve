@@ -18,5 +18,13 @@ public record RegistrationDraftRequest(
 
         @Size(max = 3) List<@Valid RegistrationWitnessDto> witnesses,
 
-        String notes
+        String notes,
+
+        // Optional geo-location captured from the browser at time of registration
+        Double propertyLatitude,
+        Double propertyLongitude,
+
+        // Polygon boundary drawn on map (GeoJSON geometry string) + PLUS Code
+        String propertyGeometry,
+        String propertyPlusCode
 ) {}

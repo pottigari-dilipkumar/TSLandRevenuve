@@ -1,13 +1,19 @@
 package in.gov.landrevenue.clean.service;
 
+import in.gov.landrevenue.clean.dto.land.LandHistoryEntry;
 import in.gov.landrevenue.clean.dto.land.LandRecordRequest;
 import in.gov.landrevenue.clean.dto.land.LandRecordResponse;
 import in.gov.landrevenue.clean.entity.LandRecord;
 import in.gov.landrevenue.clean.entity.Owner;
+import in.gov.landrevenue.clean.enums.LandType;
+import in.gov.landrevenue.clean.enums.MutationStatus;
+import in.gov.landrevenue.clean.enums.RegistrationStatus;
 import in.gov.landrevenue.clean.enums.Role;
 import in.gov.landrevenue.clean.exception.ResourceNotFoundException;
 import in.gov.landrevenue.clean.mapper.LandRevenueMapper;
 import in.gov.landrevenue.clean.repository.LandRecordRepository;
+import in.gov.landrevenue.clean.repository.LandRegistrationRepository;
+import in.gov.landrevenue.clean.repository.MutationRepository;
 import in.gov.landrevenue.clean.repository.OwnerRepository;
 import jakarta.persistence.criteria.JoinType;
 import org.slf4j.Logger;
@@ -19,6 +25,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -28,15 +36,21 @@ public class LandRecordService {
     private final OwnerRepository ownerRepository;
     private final LandRevenueMapper mapper;
     private final AuditLogService auditLogService;
+    private final LandRegistrationRepository registrationRepository;
+    private final MutationRepository mutationRepository;
 
     public LandRecordService(LandRecordRepository landRecordRepository,
                              OwnerRepository ownerRepository,
                              LandRevenueMapper mapper,
-                             AuditLogService auditLogService) {
+                             AuditLogService auditLogService,
+                             LandRegistrationRepository registrationRepository,
+                             MutationRepository mutationRepository) {
         this.landRecordRepository = landRecordRepository;
         this.ownerRepository = ownerRepository;
         this.mapper = mapper;
         this.auditLogService = auditLogService;
+        this.registrationRepository = registrationRepository;
+        this.mutationRepository = mutationRepository;
     }
 
     public LandRecordResponse create(LandRecordRequest request) {
@@ -125,11 +139,58 @@ public class LandRecordService {
         return authentication.getName();
     }
 
+    public List<LandHistoryEntry> getHistory(Long landRecordId) {
+        LandRecord lr = landRecordRepository.findById(landRecordId)
+                .orElseThrow(() -> new ResourceNotFoundException("Land record not found: " + landRecordId));
+
+        List<LandHistoryEntry> history = new ArrayList<>();
+
+        // Approved registrations for this survey number
+        registrationRepository.findByPropertySurveyNumberIgnoreCaseOrderByCreatedAtAsc(lr.getSurveyNumber())
+                .stream()
+                .filter(r -> r.getStatus() == RegistrationStatus.APPROVED)
+                .forEach(r -> history.add(new LandHistoryEntry(
+                        r.getDecidedAt() != null ? r.getDecidedAt() : r.getCreatedAt(),
+                        "REGISTRATION",
+                        r.getRegistrationRef(),
+                        r.getSellerName(),
+                        r.getBuyerName(),
+                        r.getStatus().name(),
+                        r.getConsiderationAmount() != null
+                                ? "Consideration: ₹" + r.getConsiderationAmount().toPlainString()
+                                : null)));
+
+        // All mutations for this land record
+        mutationRepository.findByLandRecordIdOrderByAppliedAtDesc(landRecordId)
+                .forEach(m -> history.add(new LandHistoryEntry(
+                        m.getDecidedAt() != null ? m.getDecidedAt() : m.getAppliedAt(),
+                        "MUTATION",
+                        m.getMutationRef(),
+                        m.getPreviousOwnerName(),
+                        m.getNewOwnerName(),
+                        m.getStatus().name(),
+                        m.getMutationType())));
+
+        history.sort(Comparator.comparing(LandHistoryEntry::date, Comparator.nullsLast(Comparator.naturalOrder())));
+        return history;
+    }
+
     private void mapRequest(LandRecord landRecord, LandRecordRequest request, Owner owner) {
         landRecord.setSurveyNumber(request.surveyNumber());
         landRecord.setDistrict(request.district());
         landRecord.setVillage(request.village());
         landRecord.setAreaInAcres(request.areaInAcres());
         landRecord.setOwner(owner);
+        if (request.landType() != null && !request.landType().isBlank()) {
+            try { landRecord.setLandType(LandType.valueOf(request.landType().toUpperCase())); }
+            catch (IllegalArgumentException ignored) { landRecord.setLandType(LandType.PRIVATE); }
+        }
+        landRecord.setPassbookNumber(request.passbookNumber());
+        if (request.geometry() != null && !request.geometry().isBlank()) {
+            landRecord.setGeometry(request.geometry());
+        }
+        if (request.plusCode() != null && !request.plusCode().isBlank()) {
+            landRecord.setPlusCode(request.plusCode());
+        }
     }
 }

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, ChevronRight } from 'lucide-react';
+import { CheckCircle, ChevronRight, MapPin } from 'lucide-react';
 import Alert from '../components/Alert';
+import PolygonMapPicker from '../components/PolygonMapPicker';
 import { registrationApi } from '../api/registrationApi';
 import { documentApi, marketValueApi } from '../api/citizenApi';
 
@@ -104,6 +105,9 @@ export default function RegistrationFormPage() {
     considerationAmount: '',
     notes: '',
   });
+  // Polygon boundary + PLUS code drawn on map
+  // Shape: { geometry: string, plusCode: string, centroid: {lat, lng} } | null
+  const [polygon, setPolygon] = useState(null);
   const [marketInfo, setMarketInfo] = useState(null);
   const [seller, setSeller] = useState(emptyParty);
   const [buyer, setBuyer] = useState(emptyParty);
@@ -157,6 +161,10 @@ export default function RegistrationFormPage() {
         seller,
         buyer,
         witnesses: witnesses.filter((w) => w.name && w.aadhaarNumber),
+        propertyGeometry:  polygon?.geometry  ?? null,
+        propertyPlusCode:  polygon?.plusCode  ?? null,
+        propertyLatitude:  polygon?.centroid?.lat ?? null,
+        propertyLongitude: polygon?.centroid?.lng ?? null,
       };
       const reg = await registrationApi.createDraft(payload);
       setSaved(reg);
@@ -274,19 +282,30 @@ export default function RegistrationFormPage() {
           </div>
 
           {marketInfo && (
-            <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-sm">
-              <p className="font-medium text-green-800">Market Value Found</p>
-              <p className="text-green-700">
-                Rate: ₹{Number(marketInfo.ratePerAcre).toLocaleString('en-IN')} / acre
-              </p>
+            <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm">
+              <p className="font-semibold text-emerald-800">Market Value Found</p>
+              <p className="text-emerald-700">Rate: ₹{Number(marketInfo.ratePerAcre).toLocaleString('en-IN')} / acre</p>
               {property.propertyAreaInAcres && (
-                <p className="text-green-700">
-                  Estimated total: ₹
-                  {(Number(marketInfo.ratePerAcre) * Number(property.propertyAreaInAcres)).toLocaleString('en-IN')}
+                <p className="text-emerald-700">
+                  Estimated total: ₹{(Number(marketInfo.ratePerAcre) * Number(property.propertyAreaInAcres)).toLocaleString('en-IN')}
                 </p>
               )}
             </div>
           )}
+
+          {/* Land Boundary — polygon drawing on map */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <MapPin size={15} className="text-brand-500" />
+              <p className="text-sm font-semibold text-slate-700">Land Parcel Boundary</p>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">optional but recommended</span>
+            </div>
+            <p className="text-xs text-slate-400">
+              Draw the boundary of the land on the map by clicking corner points, then click "Close Polygon".
+              A PLUS Code (Govt. of India location identifier) will be auto-generated.
+            </p>
+            <PolygonMapPicker value={polygon} onChange={setPolygon} height="360px" />
+          </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium">Notes (optional)</label>

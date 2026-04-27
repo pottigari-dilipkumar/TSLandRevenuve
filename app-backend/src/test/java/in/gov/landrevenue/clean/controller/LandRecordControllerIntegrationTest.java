@@ -71,7 +71,7 @@ class LandRecordControllerIntegrationTest {
     @Test
     @WithMockUser(roles = "CITIZEN")
     void create_shouldReturnForbidden_forCitizenRole() throws Exception {
-        LandRecordRequest request = new LandRecordRequest("SN-9", "Hyderabad", "Madhapur", new BigDecimal("1.20"), 1L);
+        LandRecordRequest request = new LandRecordRequest("SN-9", "Hyderabad", "Madhapur", new BigDecimal("1.20"), 1L, null, null, null, null);
 
         mockMvc.perform(post("/api/lands")
                         .contentType(APPLICATION_JSON)
@@ -103,7 +103,7 @@ class LandRecordControllerIntegrationTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void create_shouldReturnNotFound_whenOwnerMissing() throws Exception {
-        LandRecordRequest request = new LandRecordRequest("SN-55", "Hyderabad", "Madhapur", new BigDecimal("2.50"), 555L);
+        LandRecordRequest request = new LandRecordRequest("SN-55", "Hyderabad", "Madhapur", new BigDecimal("2.50"), 555L, null, null, null, null);
         when(landRecordService.create(any(LandRecordRequest.class)))
                 .thenThrow(new ResourceNotFoundException("Owner not found for ID: 555"));
 
@@ -118,7 +118,7 @@ class LandRecordControllerIntegrationTest {
     @WithMockUser(roles = "CITIZEN")
     void list_shouldReturnData_forAuthorizedRole() throws Exception {
         when(landRecordService.list(isNull(), isNull(), isNull(), isNull(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(
-                new LandRecordResponse(3L, "SN-3", "Hyderabad", "Village-A", new BigDecimal("1.00"), 1L, "Owner-1")
+                new LandRecordResponse(3L, "SN-3", "Hyderabad", "Village-A", new BigDecimal("1.00"), 1L, "Owner-1", null, false, null, null, null)
         )));
 
         mockMvc.perform(get("/api/lands"))
@@ -130,7 +130,7 @@ class LandRecordControllerIntegrationTest {
     @WithMockUser(roles = "CITIZEN")
     void getById_shouldReturnRecord_whenAuthorized() throws Exception {
         when(landRecordService.getById(33L)).thenReturn(
-                new LandRecordResponse(33L, "SN-33", "Hyderabad", "Village-B", new BigDecimal("2.20"), 10L, "Owner-10")
+                new LandRecordResponse(33L, "SN-33", "Hyderabad", "Village-B", new BigDecimal("2.20"), 10L, "Owner-10", null, false, null, null, null)
         );
 
         mockMvc.perform(get("/api/lands/33"))
@@ -142,9 +142,9 @@ class LandRecordControllerIntegrationTest {
     @Test
     @WithMockUser(roles = "DATA_ENTRY")
     void update_shouldReturnUpdatedRecord() throws Exception {
-        LandRecordRequest request = new LandRecordRequest("SN-12", "Warangal", "Kazipet", new BigDecimal("4.40"), 2L);
+        LandRecordRequest request = new LandRecordRequest("SN-12", "Warangal", "Kazipet", new BigDecimal("4.40"), 2L, null, null, null, null);
         when(landRecordService.update(eq(12L), any(LandRecordRequest.class))).thenReturn(
-                new LandRecordResponse(12L, "SN-12", "Warangal", "Kazipet", new BigDecimal("4.40"), 2L, "New Owner")
+                new LandRecordResponse(12L, "SN-12", "Warangal", "Kazipet", new BigDecimal("4.40"), 2L, "New Owner", null, false, null, null, null)
         );
 
         mockMvc.perform(put("/api/lands/12")
@@ -157,7 +157,7 @@ class LandRecordControllerIntegrationTest {
     @Test
     @WithMockUser(roles = "CITIZEN")
     void update_shouldReturnForbidden_forCitizen() throws Exception {
-        LandRecordRequest request = new LandRecordRequest("SN-12", "Warangal", "Kazipet", new BigDecimal("4.40"), 2L);
+        LandRecordRequest request = new LandRecordRequest("SN-12", "Warangal", "Kazipet", new BigDecimal("4.40"), 2L, null, null, null, null);
 
         mockMvc.perform(put("/api/lands/12")
                         .contentType(APPLICATION_JSON)

@@ -6,7 +6,6 @@ import in.gov.landrevenue.clean.repository.UserRepository;
 import in.gov.landrevenue.clean.service.LandRegistrationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,8 +51,14 @@ public class LandRegistrationController {
 
     @PutMapping("/{ref}/submit")
     @PreAuthorize("hasAnyRole('SRO', 'SRO_ASSISTANT', 'ADMIN')")
-    public RegistrationResponse submitForApproval(@PathVariable String ref) {
-        return registrationService.submitForApproval(ref);
+    public RegistrationResponse submitForApproval(@PathVariable String ref, Principal principal) {
+        return registrationService.submitForApproval(ref, principal.getName());
+    }
+
+    @GetMapping("/{ref}/events")
+    @PreAuthorize("hasAnyRole('SRO', 'SRO_ASSISTANT', 'ADMIN', 'REVENUE_OFFICER', 'CITIZEN')")
+    public List<BlockchainEventResponse> getEvents(@PathVariable String ref) {
+        return registrationService.getEvents(ref);
     }
 
     @PutMapping("/{ref}/approve")

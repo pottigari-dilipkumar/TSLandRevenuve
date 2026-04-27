@@ -9,5 +9,10 @@ public record LandRecordResponse(
         String village,
         BigDecimal areaInAcres,
         Long ownerId,
-        String ownerName
+        String ownerName,
+        String landType,
+        boolean prohibited,
+        String passbookNumber,
+        String geometry,   // GeoJSON polygon
+        String plusCode    // Open Location Code
 ) {}

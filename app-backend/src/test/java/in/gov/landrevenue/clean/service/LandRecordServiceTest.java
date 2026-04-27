@@ -45,10 +45,10 @@ class LandRecordServiceTest {
     @Test
     void create_shouldPersistRecord_whenOwnerExists() {
         Owner owner = owner(10L, "Ravi Kumar");
-        LandRecordRequest request = new LandRecordRequest("SN-1", "Hyderabad", "Madhapur", new BigDecimal("3.50"), 10L);
+        LandRecordRequest request = new LandRecordRequest("SN-1", "Hyderabad", "Madhapur", new BigDecimal("3.50"), 10L, null, null, null, null);
 
         LandRecord saved = landRecord(100L, "SN-1", owner);
-        LandRecordResponse response = new LandRecordResponse(100L, "SN-1", "Hyderabad", "Madhapur", new BigDecimal("3.50"), 10L, "Ravi Kumar");
+        LandRecordResponse response = new LandRecordResponse(100L, "SN-1", "Hyderabad", "Madhapur", new BigDecimal("3.50"), 10L, "Ravi Kumar", null, false, null, null, null);
 
         when(ownerRepository.findById(10L)).thenReturn(Optional.of(owner));
         when(landRecordRepository.save(any(LandRecord.class))).thenReturn(saved);
@@ -62,7 +62,7 @@ class LandRecordServiceTest {
 
     @Test
     void create_shouldThrowNotFound_whenOwnerMissing() {
-        LandRecordRequest request = new LandRecordRequest("SN-404", "Pune", "Khed", new BigDecimal("1.00"), 999L);
+        LandRecordRequest request = new LandRecordRequest("SN-404", "Pune", "Khed", new BigDecimal("1.00"), 999L, null, null, null, null);
         when(ownerRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> landRecordService.create(request))
@@ -79,7 +79,7 @@ class LandRecordServiceTest {
         PageRequest pageable = PageRequest.of(0, 10);
         when(landRecordRepository.findAll(org.mockito.ArgumentMatchers.<Specification<LandRecord>>any(), eq(pageable))).thenReturn(new PageImpl<>(List.of(record)));
         when(mapper.toLandResponse(record)).thenReturn(
-                new LandRecordResponse(5L, "SN-5", "Hyderabad", "Madhapur", new BigDecimal("2.00"), 1L, "Meera")
+                new LandRecordResponse(5L, "SN-5", "Hyderabad", "Madhapur", new BigDecimal("2.00"), 1L, "Meera", null, false, null, null, null)
         );
 
         Page<LandRecordResponse> result = landRecordService.list(null, null, null, null, pageable);
@@ -92,7 +92,7 @@ class LandRecordServiceTest {
     void getById_shouldReturnMappedRecord_whenFound() {
         Owner owner = owner(7L, "Kiran");
         LandRecord existing = landRecord(77L, "SN-77", owner);
-        LandRecordResponse mapped = new LandRecordResponse(77L, "SN-77", "Hyderabad", "Madhapur", new BigDecimal("2.00"), 7L, "Kiran");
+        LandRecordResponse mapped = new LandRecordResponse(77L, "SN-77", "Hyderabad", "Madhapur", new BigDecimal("2.00"), 7L, "Kiran", null, false, null, null, null);
         when(landRecordRepository.findById(77L)).thenReturn(Optional.of(existing));
         when(mapper.toLandResponse(existing)).thenReturn(mapped);
 
@@ -107,12 +107,12 @@ class LandRecordServiceTest {
         Owner oldOwner = owner(1L, "Old Owner");
         Owner newOwner = owner(2L, "New Owner");
         LandRecord existing = landRecord(12L, "SN-12", oldOwner);
-        LandRecordRequest request = new LandRecordRequest("SN-12", "Warangal", "Kazipet", new BigDecimal("8.10"), 2L);
+        LandRecordRequest request = new LandRecordRequest("SN-12", "Warangal", "Kazipet", new BigDecimal("8.10"), 2L, null, null, null, null);
 
         when(landRecordRepository.findById(12L)).thenReturn(Optional.of(existing));
         when(ownerRepository.findById(2L)).thenReturn(Optional.of(newOwner));
         when(landRecordRepository.save(existing)).thenReturn(existing);
-        when(mapper.toLandResponse(existing)).thenReturn(new LandRecordResponse(12L, "SN-12", "Warangal", "Kazipet", new BigDecimal("8.10"), 2L, "New Owner"));
+        when(mapper.toLandResponse(existing)).thenReturn(new LandRecordResponse(12L, "SN-12", "Warangal", "Kazipet", new BigDecimal("8.10"), 2L, "New Owner", null, false, null, null, null));
 
         LandRecordResponse result = landRecordService.update(12L, request);
 
@@ -123,7 +123,7 @@ class LandRecordServiceTest {
 
     @Test
     void update_shouldThrowNotFound_whenLandRecordMissing() {
-        LandRecordRequest request = new LandRecordRequest("SN-X", "N", "V", new BigDecimal("1.00"), 1L);
+        LandRecordRequest request = new LandRecordRequest("SN-X", "N", "V", new BigDecimal("1.00"), 1L, null, null, null, null);
         when(landRecordRepository.findById(404L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> landRecordService.update(404L, request))

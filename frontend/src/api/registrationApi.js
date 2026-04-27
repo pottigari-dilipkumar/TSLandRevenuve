@@ -26,4 +26,8 @@ export const registrationApi = {
     const { data } = await client.put(`/registrations/${ref}/reject`, { reason });
     return data;
   },
+  getEvents: async (ref) => {
+    const { data } = await client.get(`/registrations/${ref}/events`);
+    return data;
+  },
 };

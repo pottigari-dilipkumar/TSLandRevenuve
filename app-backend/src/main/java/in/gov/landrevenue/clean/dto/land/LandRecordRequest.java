@@ -11,5 +11,9 @@ public record LandRecordRequest(
         @NotBlank String district,
         @NotBlank String village,
         @NotNull @DecimalMin("0.01") BigDecimal areaInAcres,
-        @NotNull Long ownerId
+        @NotNull Long ownerId,
+        String landType,       // optional, defaults to PRIVATE
+        String passbookNumber, // optional PPB number
+        String geometry,       // GeoJSON polygon string
+        String plusCode        // Open Location Code from centroid
 ) {}

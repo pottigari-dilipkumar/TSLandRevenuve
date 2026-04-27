@@ -12,4 +12,7 @@ public interface LandRecordRepository extends JpaRepository<LandRecord, Long>, J
     Page<LandRecord> findAllByOwner_NationalId(String nationalId, Pageable pageable);
     Optional<LandRecord> findByIdAndOwner_NationalId(Long id, String nationalId);
     java.util.List<LandRecord> findByOwnerNationalId(String nationalId);
+    java.util.Optional<LandRecord> findBySurveyNumber(String surveyNumber);
+    java.util.List<LandRecord> findByDistrictIgnoreCaseAndVillageIgnoreCaseAndSurveyNumberIgnoreCase(
+            String district, String village, String surveyNumber);
 }

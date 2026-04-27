@@ -20,4 +20,6 @@ public interface LandRegistrationRepository extends JpaRepository<LandRegistrati
 
     @Query("SELECT r FROM LandRegistration r JOIN r.witnesses w WHERE w.aadhaarNumber = :aadhaar")
     List<LandRegistration> findByWitnessAadhaar(@Param("aadhaar") String aadhaar);
+
+    List<LandRegistration> findByPropertySurveyNumberIgnoreCaseOrderByCreatedAtAsc(String surveyNumber);
 }

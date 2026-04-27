@@ -3,12 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Alert from '../components/Alert';
 import { landApi } from '../api/landApi';
 
+const LAND_TYPES = ['PRIVATE', 'GOVERNMENT', 'FOREST', 'ASSIGNED', 'INAM', 'WAQF', 'NALA_CONVERTED'];
+
 const initialForm = {
   surveyNumber: '',
   district: '',
   village: '',
   areaInAcres: '',
   ownerId: '',
+  landType: 'PRIVATE',
+  passbookNumber: '',
 };
 
 export default function LandFormPage() {
@@ -49,6 +53,8 @@ export default function LandFormPage() {
           village: rec.village || '',
           areaInAcres: rec.areaInAcres ?? '',
           ownerId: rec.ownerId ?? '',
+          landType: rec.landType || 'PRIVATE',
+          passbookNumber: rec.passbookNumber || '',
         });
       })
       .catch(() => setError('Failed to load land record.'))
@@ -66,6 +72,8 @@ export default function LandFormPage() {
       village: form.village.trim(),
       areaInAcres: Number(form.areaInAcres),
       ownerId: Number(form.ownerId),
+      landType: form.landType || 'PRIVATE',
+      passbookNumber: form.passbookNumber.trim() || null,
     };
     try {
       if (isEdit) {
@@ -141,6 +149,27 @@ export default function LandFormPage() {
               required
               value={form.areaInAcres}
               onChange={(e) => handleChange('areaInAcres', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Land Type</label>
+            <select
+              className="input"
+              value={form.landType}
+              onChange={(e) => handleChange('landType', e.target.value)}
+            >
+              {LAND_TYPES.map((t) => (
+                <option key={t} value={t}>{t.replace('_', ' ')}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Passbook Number (PPB)</label>
+            <input
+              className="input"
+              placeholder="Optional"
+              value={form.passbookNumber}
+              onChange={(e) => handleChange('passbookNumber', e.target.value)}
             />
           </div>
           <div className="md:col-span-2">

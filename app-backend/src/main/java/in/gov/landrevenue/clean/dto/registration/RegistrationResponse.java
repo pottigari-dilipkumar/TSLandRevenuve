@@ -43,5 +43,19 @@ public record RegistrationResponse(
         Instant decidedAt,
 
         List<WitnessResponse> witnesses,
-        List<DocumentResponse> documents
+        List<DocumentResponse> documents,
+
+        // Geo-location
+        Double propertyLatitude,
+        Double propertyLongitude,
+
+        // Polygon boundary + PLUS Code
+        String propertyGeometry,
+        String propertyPlusCode,
+
+        // Blockchain anchor
+        String blockchainTxHash,
+        Long blockchainBlockNumber,
+        String blockchainSyncStatus,
+        java.time.Instant blockchainSyncedAt
 ) {}

@@ -4,4 +4,5 @@ import in.gov.landrevenue.clean.entity.Owner;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OwnerRepository extends JpaRepository<Owner, Long> {
+    java.util.Optional<Owner> findByNationalId(String nationalId);
 }

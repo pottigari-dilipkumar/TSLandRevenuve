@@ -108,6 +108,24 @@ public class BlockchainRegistrationGateway {
         }
     }
 
+    /**
+     * Anchors a clean-architecture LandRegistration onto the chain.
+     * Uses the SHA3 hash of the registrationRef as parcelId and deedHash.
+     * Uses a system-level placeholder address since citizens don't have Ethereum wallets.
+     */
+    public BlockchainAnchorResult anchorLandRegistration(String registrationRef, String surveyNumber, String district) {
+        if (!properties.isEnabled()) {
+            return BlockchainAnchorResult.skipped();
+        }
+        RegistrationRecordEntity synthetic = new RegistrationRecordEntity();
+        synthetic.setRegistrationRef(registrationRef);
+        synthetic.setParcelId(surveyNumber + ":" + district);
+        synthetic.setDeedHash(Hash.sha3String(registrationRef));
+        // System placeholder — real deployments should map citizen identity to an on-chain address
+        synthetic.setOwnerWalletAddress("0x0000000000000000000000000000000000000001");
+        return anchorRegistration(synthetic);
+    }
+
     public boolean isHealthy() {
         if (!properties.isEnabled()) {
             return false;

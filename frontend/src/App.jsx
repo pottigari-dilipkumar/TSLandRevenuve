@@ -17,6 +17,11 @@ import MarketValuesPage from './pages/MarketValuesPage';
 import RegistrationFormPage from './pages/RegistrationFormPage';
 import RegistrationListPage from './pages/RegistrationListPage';
 import RegistrationDetailPage from './pages/RegistrationDetailPage';
+import MutationListPage from './pages/MutationListPage';
+import MutationFormPage from './pages/MutationFormPage';
+import MutationDetailPage from './pages/MutationDetailPage';
+import PublicSearchPage from './pages/PublicSearchPage';
+import EncumbranceCertificatePage from './pages/EncumbranceCertificatePage';
 import { ROLES } from './utils/roles';
 
 export default function App() {
@@ -63,6 +68,17 @@ export default function App() {
           <Route element={<ProtectedRoute roles={[ROLES.SRO, ROLES.SRO_ASSISTANT, ROLES.ADMIN]} />}>
             <Route path="/registrations/new" element={<RegistrationFormPage />} />
           </Route>
+
+          {/* Mutations */}
+          <Route path="/mutations" element={<MutationListPage />} />
+          <Route path="/mutations/:ref" element={<MutationDetailPage />} />
+          <Route element={<ProtectedRoute roles={[ROLES.ADMIN, ROLES.DATA_ENTRY, ROLES.CITIZEN]} />}>
+            <Route path="/mutations/new" element={<MutationFormPage />} />
+          </Route>
+
+          {/* Public search & EC — accessible to all logged-in users */}
+          <Route path="/public/search" element={<PublicSearchPage />} />
+          <Route path="/public/ec" element={<EncumbranceCertificatePage />} />
 
           {/* Admin */}
           <Route element={<ProtectedRoute roles={[ROLES.ADMIN]} />}>

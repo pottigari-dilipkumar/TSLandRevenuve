@@ -1,5 +1,6 @@
 package in.gov.landrevenue.clean.controller;
 
+import in.gov.landrevenue.clean.dto.land.LandHistoryEntry;
 import in.gov.landrevenue.clean.dto.land.LandRecordRequest;
 import in.gov.landrevenue.clean.dto.land.LandRecordResponse;
 import in.gov.landrevenue.clean.service.LandRecordService;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Objects;
 
 @RestController
@@ -78,6 +80,16 @@ public class LandRecordController {
     @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {
         landRecordService.delete(id);
+    }
+
+    /**
+     * Ownership & transaction history for a land parcel —
+     * approved registrations + all mutations, ordered chronologically.
+     */
+    @GetMapping("/{id}/history")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<LandHistoryEntry>> getHistory(@PathVariable Long id) {
+        return ResponseEntity.ok(landRecordService.getHistory(id));
     }
 
     private String csvEscape(String value) {

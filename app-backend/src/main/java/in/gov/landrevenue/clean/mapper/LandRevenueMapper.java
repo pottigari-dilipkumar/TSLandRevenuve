@@ -6,6 +6,7 @@ import in.gov.landrevenue.clean.dto.revenue.RevenueRecordResponse;
 import in.gov.landrevenue.clean.entity.LandRecord;
 import in.gov.landrevenue.clean.entity.Owner;
 import in.gov.landrevenue.clean.entity.RevenueRecord;
+import in.gov.landrevenue.clean.enums.LandType;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,6 +16,7 @@ public class LandRevenueMapper {
     }
 
     public LandRecordResponse toLandResponse(LandRecord landRecord) {
+        LandType lt = landRecord.getLandType() != null ? landRecord.getLandType() : LandType.PRIVATE;
         return new LandRecordResponse(
                 landRecord.getId(),
                 landRecord.getSurveyNumber(),
@@ -22,7 +24,12 @@ public class LandRevenueMapper {
                 landRecord.getVillage(),
                 landRecord.getAreaInAcres(),
                 landRecord.getOwner().getId(),
-                landRecord.getOwner().getName()
+                landRecord.getOwner().getName(),
+                lt.name(),
+                landRecord.isProhibited(),
+                landRecord.getPassbookNumber(),
+                landRecord.getGeometry(),
+                landRecord.getPlusCode()
         );
     }
 

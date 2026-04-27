@@ -46,6 +46,30 @@ public class LandRegistration {
     @Column(precision = 15, scale = 2)
     private BigDecimal stampDuty;
 
+    // Geo-location (captured at time of registration)
+    private Double propertyLatitude;
+    private Double propertyLongitude;
+
+    /** GeoJSON Polygon string drawn on map representing the land parcel boundary */
+    @Column(columnDefinition = "TEXT")
+    private String propertyGeometry;
+
+    /** Open Location Code (PLUS Code) for the polygon centroid */
+    @Column(length = 20)
+    private String propertyPlusCode;
+
+    // Blockchain anchor (populated after APPROVED + EVM anchor)
+    @Column(length = 100)
+    private String blockchainTxHash;
+
+    private Long blockchainBlockNumber;
+
+    /** SYNCED | FAILED | SKIPPED */
+    @Column(length = 10)
+    private String blockchainSyncStatus;
+
+    private Instant blockchainSyncedAt;
+
     // Seller details
     @Column(nullable = false)
     private String sellerName;
@@ -153,4 +177,20 @@ public class LandRegistration {
     public void setDecidedAt(Instant decidedAt) { this.decidedAt = decidedAt; }
     public List<RegistrationWitness> getWitnesses() { return witnesses; }
     public List<RegistrationDocument> getDocuments() { return documents; }
+    public Double getPropertyLatitude() { return propertyLatitude; }
+    public void setPropertyLatitude(Double propertyLatitude) { this.propertyLatitude = propertyLatitude; }
+    public Double getPropertyLongitude() { return propertyLongitude; }
+    public void setPropertyLongitude(Double propertyLongitude) { this.propertyLongitude = propertyLongitude; }
+    public String getPropertyGeometry() { return propertyGeometry; }
+    public void setPropertyGeometry(String propertyGeometry) { this.propertyGeometry = propertyGeometry; }
+    public String getPropertyPlusCode() { return propertyPlusCode; }
+    public void setPropertyPlusCode(String propertyPlusCode) { this.propertyPlusCode = propertyPlusCode; }
+    public String getBlockchainTxHash() { return blockchainTxHash; }
+    public void setBlockchainTxHash(String blockchainTxHash) { this.blockchainTxHash = blockchainTxHash; }
+    public Long getBlockchainBlockNumber() { return blockchainBlockNumber; }
+    public void setBlockchainBlockNumber(Long blockchainBlockNumber) { this.blockchainBlockNumber = blockchainBlockNumber; }
+    public String getBlockchainSyncStatus() { return blockchainSyncStatus; }
+    public void setBlockchainSyncStatus(String blockchainSyncStatus) { this.blockchainSyncStatus = blockchainSyncStatus; }
+    public Instant getBlockchainSyncedAt() { return blockchainSyncedAt; }
+    public void setBlockchainSyncedAt(Instant blockchainSyncedAt) { this.blockchainSyncedAt = blockchainSyncedAt; }
 }

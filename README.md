@@ -1,567 +1,166 @@
-# Land Revenue & Registration System
+# Telangana Land Revenue & Registration System
 
-This repository contains a working local prototype for land records, revenue collection, Aadhaar-style identity verification, and registration flows with optional blockchain anchoring.
+A full-stack digital platform for land records management, property registration, mutation workflows, revenue collection, and public encumbrance certificate generation — built for Telangana state governance.
 
-Main modules:
-
-- **Spring Boot backend** (`app-backend/`)
-  - JWT-secured land and revenue APIs
-  - owner, land record, revenue record, dashboard, and audit endpoints
-  - Aadhaar OTP demo flow
-  - registration verification flow
-  - optional blockchain anchoring support for registrations
-- **React frontend** (`frontend/`)
-  - Vite + React + Tailwind UI
-  - login, dashboard, land records, revenue details, and protected routing
-- **Reference artifacts**
-  - `backend/api_spec.yaml`
-  - `backend/schema.sql`
-  - `smart-contracts/LandRegistry.sol`
+> **Not a developer?** Read [BUSINESS.md](./BUSINESS.md) for a plain-English explanation of what this system does and why it exists.
 
 ---
 
-## 0) What This Project Does
+## Stack
 
-The project combines three backend capability groups in one runtime:
-
-1. **Core land and revenue management**
-   - manage owners
-   - create and search land records
-   - record revenue payments
-   - view dashboard summaries and revenue trends
-
-2. **Registration and identity demo flow**
-   - send demo Aadhaar OTP
-   - verify OTP and issue a temporary identity token
-   - submit and verify a registration record
-
-3. **Platform simulation**
-   - simulate internal registration workflows, documents, and notification settings
-   - support geometry validation and demo land parcel history
-
-For local use, the backend and frontend are enough to explore the main flows. Blockchain integration is included in the backend, but it is disabled by default in the local profile.
+| Layer | Technology |
+|---|---|
+| Backend | Spring Boot 3, Java 17, Spring Data JPA, Spring Security (JWT) |
+| Frontend | React 18, Vite, Tailwind CSS, react-leaflet |
+| Database | PostgreSQL |
+| Cache | Redis |
+| Blockchain (optional) | Web3j + EVM (Solidity contract) |
 
 ---
 
-## 1) Backend Documentation
+## Quick Start (Local)
 
-## 1.1 API Endpoints (request/response)
-
-Base URL (local): `http://localhost:8080`
-
-OpenAPI docs from Spring Boot:
-- JSON: `http://localhost:8080/api-docs`
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-
-> The backend currently exposes **three API groups** in one runtime: Clean APIs, Aadhaar/Registration demo APIs, and Platform simulation APIs.
-
-### A. Clean APIs (secured with JWT + role checks)
-
-#### Auth
-
-##### `POST /api/auth/login`
-**Request**
-```json
-{
-  "username": "admin",
-  "password": "admin123"
-}
-```
-
-**Response 200**
-```json
-{
-  "token": "<jwt>",
-  "role": "ADMIN"
-}
-```
-
-#### Owners
-
-##### `POST /api/owners` (roles: `ADMIN`, `DATA_ENTRY`)
-**Request**
-```json
-{
-  "name": "Ravi Kumar",
-  "nationalId": "ID-12345"
-}
-```
-
-**Response 200**
-```json
-{
-  "id": 1,
-  "name": "Ravi Kumar",
-  "nationalId": "ID-12345"
-}
-```
-
-##### `GET /api/owners` (roles: `ADMIN`, `REVENUE_OFFICER`, `DATA_ENTRY`)
-Returns Spring `Page<OwnerResponse>`.
-
-#### Land Records
-
-##### `POST /api/lands` (roles: `ADMIN`, `DATA_ENTRY`)
-**Request**
-```json
-{
-  "surveyNumber": "SV-2026-001",
-  "district": "Pune",
-  "village": "Mulshi",
-  "areaInAcres": 1.75,
-  "ownerId": 1
-}
-```
-
-**Response 200**
-```json
-{
-  "id": 10,
-  "surveyNumber": "SV-2026-001",
-  "district": "Pune",
-  "village": "Mulshi",
-  "areaInAcres": 1.75,
-  "ownerId": 1,
-  "ownerName": "Ravi Kumar"
-}
-```
-
-##### `GET /api/lands` (roles: `ADMIN`, `REVENUE_OFFICER`, `DATA_ENTRY`, `CITIZEN`)
-Returns Spring `Page<LandRecordResponse>`.
-
-##### `GET /api/lands/{id}` (roles: `ADMIN`, `REVENUE_OFFICER`, `DATA_ENTRY`, `CITIZEN`)
-Returns `LandRecordResponse`.
-
-##### `PUT /api/lands/{id}` (roles: `ADMIN`, `DATA_ENTRY`)
-Request schema same as create.
-
-##### `DELETE /api/lands/{id}` (role: `ADMIN`)
-Response: empty body.
-
-#### Revenue Records
-
-##### `POST /api/revenues` (roles: `ADMIN`, `REVENUE_OFFICER`)
-**Request**
-```json
-{
-  "amount": 5000,
-  "paymentDate": "2026-03-25",
-  "paymentReference": "TXN-1001",
-  "landRecordId": 10
-}
-```
-
-**Response 200**
-```json
-{
-  "id": 22,
-  "amount": 5000,
-  "paymentDate": "2026-03-25",
-  "paymentReference": "TXN-1001",
-  "landRecordId": 10
-}
-```
-
-##### `GET /api/revenues` (roles: `ADMIN`, `REVENUE_OFFICER`, `CITIZEN`)
-Returns Spring `Page<RevenueRecordResponse>`.
-
----
-
-### B. Aadhaar + Registration Demo APIs (mock flow)
-
-#### Aadhaar OTP
-
-##### `POST /api/auth/aadhaar/send-otp`
-**Request**
-```json
-{
-  "aadhaarNumber": "234567890123"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "OTP sent successfully (demo mode)",
-  "demoOtp": "123456"
-}
-```
-
-##### `POST /api/auth/aadhaar/verify-otp`
-**Request**
-```json
-{
-  "aadhaarNumber": "234567890123",
-  "otp": "123456"
-}
-```
-
-**Response 200**
-```json
-{
-  "message": "Identity verified",
-  "verifiedIdentityToken": "<uuid>"
-}
-```
-
-#### Registrations
-
-##### `POST /api/registrations`
-Requires a valid `verifiedIdentityToken` from OTP flow.
-
-**Request**
-```json
-{
-  "parcelId": "PCL-1001",
-  "sellerName": "Ravi Kumar",
-  "buyerName": "Anita Sharma",
-  "registrationRef": "REG-2026-0001",
-  "deedHash": "0xabc123",
-  "verifiedIdentityToken": "<token>",
-  "ownerWalletAddress": "0x1111111111111111111111111111111111111111"
-}
-```
-
-**Response 201**
-```json
-{
-  "registrationRef": "REG-2026-0001",
-  "parcelId": "PCL-1001",
-  "sellerName": "Ravi Kumar",
-  "buyerName": "Anita Sharma",
-  "deedHash": "0xabc123",
-  "verifiedIdentityToken": "<token>",
-  "createdAt": "2026-03-25T12:00:00Z",
-  "ownerWalletAddress": "0x1111111111111111111111111111111111111111",
-  "status": "SUBMITTED",
-  "blockchainSyncStatus": "SYNCED",
-  "blockchainTxHash": "0x....",
-  "blockchainBlockNumber": 512233,
-  "blockchainSyncedAt": "2026-03-25T12:00:03Z",
-  "blockchainErrorMessage": null
-}
-```
-
-##### `GET /api/public/verify/{registrationRef}`
-Returns the same `RegistrationRecord` payload.
-
-##### `POST /api/registrations/{registrationRef}/blockchain/sync`
-Retries on-chain anchoring for a registration and returns updated blockchain sync fields.
-
-##### `GET /api/registrations/blockchain/health`
-Returns `UP` when RPC + contract connectivity checks pass, otherwise `DOWN`.
-
----
-
-### C. Platform Simulation APIs (`/api/platform/*`)
-
-##### `POST /api/platform/auth/sign-in`
-Request:
-```json
-{ "username": "admin", "password": "admin123" }
-```
-Response includes `demoOtp`, contact details.
-
-##### `POST /api/platform/auth/verify-2fa`
-Request:
-```json
-{ "username": "admin", "otp": "123456" }
-```
-Response:
-```json
-{ "sessionToken": "<uuid>", "role": "ADMIN" }
-```
-
-##### `GET /api/platform/users`
-Returns array of `SystemUser`.
-
-##### `POST /api/platform/lands`
-Creates land with polygon and starter history/documents.
-
-##### `GET /api/platform/lands`
-Returns all platform lands.
-
-##### `GET /api/platform/lands/{landId}`
-Returns one land parcel.
-
-##### `GET /api/platform/lands/{landId}/history`
-Returns land event history.
-
-##### `GET /api/platform/lands/{landId}/documents/{documentId}/download`
-Downloads simulated document content as binary attachment.
-
-##### `POST /api/platform/notifications/config`
-Request:
-```json
-{ "emailEnabled": true, "smsEnabled": true }
-```
-
-##### `GET /api/platform/notifications/config`
-Returns current notification config.
-
----
-
-## 1.2 Authentication Flow
-
-### Clean API JWT flow
-1. Client calls `POST /api/auth/login`.
-2. Backend validates credentials from `users` table (BCrypt).
-3. Backend returns JWT with `sub=username` and `role` claim.
-4. Client sends `Authorization: Bearer <token>` on protected API calls.
-5. `JwtAuthenticationFilter` parses JWT and sets Spring Security context.
-6. `@PreAuthorize` validates role authorization.
-
-Default seeded users (local/dev):
-- `admin` / `admin123` → `ADMIN`
-- `officer` / `officer123` → `REVENUE_OFFICER`
-- `entry` / `entry123` → `DATA_ENTRY`
-- `citizen` / `citizen123` → `CITIZEN`
-
-### Aadhaar demo flow
-1. `send-otp` returns a demo OTP in API response.
-2. `verify-otp` returns `verifiedIdentityToken` (UUID) valid for 30 minutes.
-3. `POST /api/registrations` accepts only valid, non-expired token.
-
-### Platform simulation 2FA flow
-1. `sign-in` validates static in-memory credentials and generates demo OTP.
-2. `verify-2fa` returns `sessionToken` and role.
-3. Token is stored in memory (demo behavior).
-
----
-
-## 1.3 DB Schema
-
-### Runtime schema (from JPA entities in `app-backend`)
-
-`users`
-- `id` BIGINT PK
-- `username` UNIQUE NOT NULL
-- `password` NOT NULL
-- `role` VARCHAR NOT NULL
-
-`owners`
-- `id` BIGINT PK
-- `name` NOT NULL
-- `national_id` UNIQUE NOT NULL
-
-`land_records`
-- `id` BIGINT PK
-- `survey_number` UNIQUE NOT NULL
-- `district` NOT NULL
-- `village` NOT NULL
-- `area_in_acres` DECIMAL(12,2) NOT NULL
-- `owner_id` FK → owners.id NOT NULL
-
-`revenue_records`
-- `id` BIGINT PK
-- `amount` DECIMAL(12,2) NOT NULL
-- `payment_date` DATE NOT NULL
-- `payment_reference` NOT NULL
-- `land_record_id` FK → land_records.id NOT NULL
-
-> Hibernate is currently set to `spring.jpa.hibernate.ddl-auto=update`.
-
-### Legacy blueprint schema
-`backend/schema.sql` contains an expanded design with:
-- `owners`, `parcels`, `registrations`, `mutations`, `revenue_demands`
-
-This is a broader conceptual schema and is not the direct source for current JPA runtime table generation.
-
----
-
-## 2) Frontend Documentation
-
-Primary frontend is the React app in `frontend/`.
-
-## 2.1 Folder Structure
-
-```text
-frontend/
-├── src/
-│   ├── api/
-│   │   ├── client.js
-│   │   ├── authApi.js
-│   │   └── landApi.js
-│   ├── components/
-│   │   ├── Alert.jsx
-│   │   ├── ProtectedRoute.jsx
-│   │   └── StatCard.jsx
-│   ├── layouts/
-│   │   ├── AuthLayout.jsx
-│   │   └── MainLayout.jsx
-│   ├── pages/
-│   │   ├── DashboardPage.jsx
-│   │   ├── LandFormPage.jsx
-│   │   ├── LandRecordsPage.jsx
-│   │   ├── LoginPage.jsx
-│   │   ├── NotFoundPage.jsx
-│   │   ├── RegisterPage.jsx
-│   │   ├── RevenueDetailsPage.jsx
-│   │   └── UserManagementPage.jsx
-│   ├── store/
-│   │   └── authStore.js
-│   ├── utils/
-│   │   └── roles.js
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── index.css
-├── Dockerfile
-├── nginx.conf
-├── package.json
-├── vite.config.js
-└── tailwind.config.js
-```
-
-## 2.2 Component Explanation
-
-- `src/main.jsx`: React bootstrap + router mounting.
-- `src/App.jsx`: route map, nested layouts, role-based route protection.
-- `src/components/ProtectedRoute.jsx`: auth and role guard.
-- `src/layouts/AuthLayout.jsx`: public auth page shell.
-- `src/layouts/MainLayout.jsx`: authenticated shell, sidebar nav, logout.
-- `src/store/authStore.js`: persisted auth state and login handling.
-- `src/api/client.js`: Axios client with bearer-token interceptor.
-- `src/pages/DashboardPage.jsx`: KPI cards + revenue trend chart (with fallback data).
-- `src/pages/LandRecordsPage.jsx`: land table view (with fallback data).
-- `src/pages/LandFormPage.jsx`: form to create/update land records.
-- `src/pages/RevenueDetailsPage.jsx`: revenue summary cards.
-- `src/pages/UserManagementPage.jsx`: user table.
-
----
-
-## 3) Setup
-
-## 3.1 Local prerequisites
-
-- Java 17
-- Maven 3.9+
-- Node.js 18+ and npm
-- PostgreSQL running locally
-- Redis running locally
-
-Local backend values are already pinned in `app-backend/src/main/resources/application-local.yml`:
-
-- PostgreSQL database: `land_revenue`
-- PostgreSQL username: `postgres`
-- PostgreSQL password: `postgres`
-- Redis host: `localhost`
-- Redis port: `6379`
-- Blockchain integration: disabled by default for local runs
-
-If your shell defaults to Java 11, use Java 17 explicitly:
+**Prerequisites:** Java 17, Maven 3.9+, Node 18+, PostgreSQL at `localhost:5432/land_revenue`, Redis at `localhost:6379`
 
 ```bash
-export JAVA_HOME=$(/usr/libexec/java_home -v 17)
-export PATH="$JAVA_HOME/bin:$PATH"
-java -version
-```
-
-## 3.2 How to run backend
-
-### Option A: Maven
-```bash
+# Backend
 cd app-backend
 JAVA_HOME=$(/usr/libexec/java_home -v 17) PATH=$(/usr/libexec/java_home -v 17)/bin:$PATH mvn spring-boot:run
-```
 
-Backend URL: `http://localhost:8080`
-
-Useful backend URLs:
-
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8080/api-docs`
-
-### Option B: helper script (backend + Vite frontend)
-```bash
-./run-local.sh
-```
-
-## 3.3 How to run frontend
-
-### Dev mode (Vite)
-```bash
+# Frontend (separate terminal)
 cd frontend
 npm install
 npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
-Vite URL: `http://localhost:5173`
+Or use the convenience script from the repo root:
+```bash
+./run-local.sh
+```
 
-The frontend talks to the backend at `http://localhost:8080/api` by default.
-
-Login with the seeded backend users:
-
-- `admin / admin123`
-- `officer / officer123`
-- `entry / entry123`
-- `citizen / citizen123`
-
-Note: the login form uses **username**, not email.
-
-## 3.4 Environment variables
-
-### Backend env vars
-
-| Variable | Default | Description |
-|---|---|---|
-| `SPRING_PROFILES_ACTIVE` | `local` | Active Spring profile (`local`, `dev`, `qa`, `uat`, `preprod`, `prod`, `dr`) |
-| `JWT_SECRET` | `ReplaceWithASecretKeyOfAtLeast32Characters` | JWT signing key |
-| `JWT_EXPIRATION_MS` | `86400000` | JWT expiry in milliseconds |
-| `LANDREGISTRY_BLOCKCHAIN_ENABLED` | `false` | Enables active on-chain anchoring for registrations |
-| `LANDREGISTRY_BLOCKCHAIN_RPC_URL` | `http://localhost:8545` | JSON-RPC endpoint for EVM node |
-| `LANDREGISTRY_BLOCKCHAIN_CHAIN_ID` | `1337` | Chain id used for transaction signing |
-| `LANDREGISTRY_BLOCKCHAIN_CONTRACT_ADDRESS` | configured in non-local environments or when explicitly enabled | Deployed `LandRegistry` contract address |
-| `LANDREGISTRY_BLOCKCHAIN_REGISTRAR_PRIVATE_KEY` | configured in non-local environments or when explicitly enabled | Registrar wallet private key used to submit contract transactions |
-| `LANDREGISTRY_BLOCKCHAIN_GAS_LIMIT` | `250000` | Gas limit for contract writes |
-
-### Frontend env vars
-
-| Variable | Default | Description |
-|---|---|---|
-| `VITE_API_BASE_URL` | `http://localhost:8080/api` | Axios API base URL |
-
----
-
-## 4) Deployment
-
-## 4.1 Docker steps
-
-From repository root:
-
+Or Docker (full stack):
 ```bash
 docker compose up --build
 ```
 
-Services:
-- Backend: `http://localhost:8080`
-- Frontend: `http://localhost:8081`
-
-Detached mode:
-```bash
-docker compose up --build -d
-```
-
-Stop services:
-```bash
-docker compose down
-```
-
-## 4.2 Production setup
-
-Recommended for production hardening:
-
-1. Use managed PostgreSQL and secure networking.
-2. Store `JWT_SECRET` and DB credentials in secret manager.
-3. Replace `ddl-auto=update` with Flyway/Liquibase migrations.
-4. Restrict CORS origins (avoid wildcard in production).
-5. Add central logging/metrics/alerts.
-6. Terminate TLS at ingress/reverse proxy.
-7. Add CI/CD with test + vulnerability scanning.
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:8080 |
+| Swagger UI | http://localhost:8080/swagger-ui.html |
 
 ---
 
-## Additional Notes
+## Default Login Credentials
 
-- `backend/api_spec.yaml` documents legacy Aadhaar/registration APIs.
-- `backend/schema.sql` contains expanded conceptual schema.
-- Local profile values are intentionally concrete to simplify setup and testing.
+| Username | Password | Role |
+|---|---|---|
+| `admin` | `admin123` | Admin — full access |
+| `officer` | `officer123` | Revenue Officer |
+| `entry` | `entry123` | Data Entry |
+| `citizen` | `citizen123` | Citizen |
+
+---
+
+## Repository Structure
+
+```
+app-backend/        Spring Boot backend (APIs, JPA, security, blockchain)
+frontend/           React + Vite frontend
+smart-contracts/    Solidity LandRegistry contract (optional blockchain)
+backend/            Legacy API spec and schema blueprints
+```
+
+### Backend package layout
+
+```
+clean/              Primary domain (land records, owners, revenue, auth)
+  controller/       REST controllers
+  service/          Business logic
+  repository/       Spring Data JPA
+  entity/           JPA entities
+  security/         JWT filter and token utils
+  config/           Spring Security, cache config
+
+controller/         Registration, Aadhaar, platform simulation controllers
+service/            Registration service, blockchain sync
+blockchain/         Web3j EVM integration (disabled by default)
+```
+
+---
+
+## API Groups
+
+The backend exposes three API groups in a single runtime:
+
+| Group | Base Path | Auth |
+|---|---|---|
+| Domain CRUD | `/api/auth/*`, `/api/lands/*`, `/api/owners/*`, `/api/revenues/*` | JWT Bearer |
+| Aadhaar / Registration | `/api/auth/aadhaar/*`, `/api/registrations/*`, `/api/public/*` | Verified Identity Token (30 min) |
+| Platform Simulation | `/api/platform/*` | In-memory session token |
+
+Full endpoint documentation: **http://localhost:8080/swagger-ui.html**
+
+---
+
+## Key Features
+
+- **Land Records** — survey number, owner, district/village, area, land type, map polygon boundary, PLUS Code
+- **Property Registration** — Aadhaar OTP identity verification → SRO review → approval auto-updates land ownership
+- **Mutation Workflow** — APPLIED → MANDAL_REVIEW → APPROVED/REJECTED; auto-updates ownership on approval
+- **Ownership History** — full timeline of every ownership transfer (registrations + mutations) per parcel
+- **Encumbrance Certificate** — public search + EC generation without login
+- **Revenue Tracking** — payment recording and dashboard summaries
+- **Map Polygon Drawing** — click-to-draw parcel boundaries on OpenStreetMap; PLUS Code auto-generated from centroid
+- **Blockchain Anchoring** — optional EVM anchoring of registrations (disabled by default)
+
+---
+
+## Environment Variables
+
+### Backend
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SPRING_PROFILES_ACTIVE` | `local` | Active Spring profile |
+| `JWT_SECRET` | (local default) | JWT signing key (32+ chars in prod) |
+| `JWT_EXPIRATION_MS` | `86400000` | Token expiry in ms |
+| `LANDREGISTRY_BLOCKCHAIN_ENABLED` | `false` | Enable EVM anchoring |
+| `LANDREGISTRY_BLOCKCHAIN_RPC_URL` | `http://localhost:8545` | EVM RPC endpoint |
+| `LANDREGISTRY_BLOCKCHAIN_CONTRACT_ADDRESS` | — | Deployed contract address |
+| `LANDREGISTRY_BLOCKCHAIN_REGISTRAR_PRIVATE_KEY` | — | Wallet key for on-chain writes |
+
+### Frontend
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `VITE_API_BASE_URL` | `http://localhost:8080/api` | Backend API base URL |
+
+---
+
+## Running Tests
+
+```bash
+# All tests
+cd app-backend && mvn test
+
+# Single class
+cd app-backend && mvn test -Dtest=LandRecordServiceTest
+
+# Single method
+cd app-backend && mvn test -Dtest=LandRecordServiceTest#methodName
+```
+
+JaCoCo enforces **80% minimum code coverage** — build fails if coverage drops below this threshold.
+
+---
+
+## Production Hardening Checklist
+
+- Replace `ddl-auto=update` with Flyway or Liquibase migrations
+- Store `JWT_SECRET` and DB credentials in a secrets manager
+- Use managed PostgreSQL with connection pooling
+- Restrict CORS origins (remove wildcard)
+- Terminate TLS at ingress / reverse proxy
+- Add central logging, metrics, and alerting
+- Run CI/CD with test + vulnerability scanning
