@@ -111,6 +111,81 @@ This removes the need for citizens to visit government offices for basic informa
 
 ---
 
+## How Blockchain Works in This System
+
+### The Simple Idea
+
+Think of blockchain like a **public notice board that nobody can erase**.
+
+When a property registration is approved, the system can optionally "stamp" that approval onto a blockchain — a shared digital ledger that is maintained by thousands of computers around the world simultaneously. Once something is written on this ledger, no single person, company, or government official can go back and change or delete it.
+
+This is the difference between:
+- A land record stored in a government database — *a file that an insider could theoretically alter*
+- A land record anchored on a blockchain — *a permanent, public, tamper-proof stamp that anyone can verify independently*
+
+---
+
+### A Real-World Example
+
+**The Situation:**
+Ravi owns 3 acres of agricultural land in Nalgonda district (Survey No. 142/B). He sells it to Priya for ₹45 lakhs.
+
+**What Happens Step by Step:**
+
+**Step 1 — Identity Verified**
+Both Ravi and Priya verify their identities using their Aadhaar numbers. The system sends an OTP to their registered mobile numbers. Only after they enter the correct OTP does the system accept the registration.
+
+**Step 2 — Registration Submitted**
+Their details, the sale deed, and the land parcel boundary are submitted through the system. A unique reference number is generated — for example, `REG-2026-NLG-00421`.
+
+**Step 3 — SRO Approves**
+The Sub-Registrar Officer reviews the documents, confirms there are no disputes or encumbrances on the land, and clicks Approve.
+
+**Step 4 — Blockchain Stamp**
+The moment of approval, the system creates a unique digital fingerprint of this registration — a short code like `0x8f3a...c91b` — and writes it permanently onto the blockchain. This fingerprint is called a **transaction hash**.
+
+Think of it like a wax seal on an envelope. The seal does not contain all the details of the letter inside, but it proves the letter has not been tampered with since it was sealed.
+
+**Step 5 — Ownership Updated**
+Priya is now the recorded owner of Survey No. 142/B in the land records.
+
+---
+
+### What This Means in Practice
+
+**Six months later**, a property dealer approaches Ravi (the old owner) and convinces him to fraudulently "sell" the same land again to a third person.
+
+The fraudulent buyer checks the land records — they clearly show Priya as the owner. But even if someone tried to alter the government database, the blockchain entry for `REG-2026-NLG-00421` with transaction hash `0x8f3a...c91b` is still publicly visible on the blockchain. Anyone — a court, a bank, another government — can look up that hash and independently verify:
+
+- What land was transferred
+- From whom to whom
+- At exactly what date and time
+- That the record has not been altered since
+
+No insider, no hacker, no political pressure can change what is written on the blockchain. **The fraud is provably impossible.**
+
+---
+
+### What a Bank Sees
+
+When Priya later goes to a bank to take a loan against this land, the bank officer can:
+
+1. Pull the Encumbrance Certificate from this system — showing Priya as the owner with a clean title
+2. Cross-check the blockchain transaction hash — confirming the registration is genuine and unaltered
+3. Approve the loan with confidence — knowing the ownership is cryptographically verified
+
+This removes the risk of banks being cheated by fake documents or manipulated land records.
+
+---
+
+### Is Blockchain Always On?
+
+No — it is **optional** and can be switched on or off by the government. When switched off, the system works exactly the same way for citizens and officers. The only difference is that approvals are not additionally anchored to the blockchain.
+
+In this system, blockchain anchoring is **turned off by default** for local and testing environments, and can be enabled for production deployments where the highest level of tamper-proof verification is needed.
+
+---
+
 ## The Big Picture
 
 This system transforms land governance from a process that happens in paper files inside government offices into a **transparent, citizen-accessible, digitally verifiable record** — bringing Telangana's land administration into the modern era and protecting citizens' most valuable asset: their land.
