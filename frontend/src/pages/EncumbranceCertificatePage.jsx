@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Search, FileCheck, ShieldCheck, GitBranch, AlertCircle, Download } from 'lucide-react';
 import Alert from '../components/Alert';
 import { landApi } from '../api/landApi';
+import { DISTRICTS, getMandals } from '../utils/telanganaLocations';
 
 function Section({ title, icon: Icon, count, children }) {
   return (
@@ -25,6 +26,7 @@ export default function EncumbranceCertificatePage() {
   const [error, setError] = useState('');
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+  const setDistrict = (v) => setForm((p) => ({ ...p, district: v, village: '' }));
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -56,11 +58,17 @@ export default function EncumbranceCertificatePage() {
       <form className="card grid gap-4 md:grid-cols-3" onSubmit={handleSearch}>
         <div>
           <label className="mb-1 block text-sm font-medium">District <span className="text-red-500">*</span></label>
-          <input className="input" required placeholder="e.g. Rangareddy" value={form.district} onChange={(e) => set('district', e.target.value)} />
+          <select className="input" required value={form.district} onChange={(e) => setDistrict(e.target.value)}>
+            <option value="">Select district</option>
+            {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Village <span className="text-red-500">*</span></label>
-          <input className="input" required placeholder="e.g. Shamshabad" value={form.village} onChange={(e) => set('village', e.target.value)} />
+          <label className="mb-1 block text-sm font-medium">Village / Mandal <span className="text-red-500">*</span></label>
+          <select className="input" required value={form.village} onChange={(e) => set('village', e.target.value)} disabled={!form.district}>
+            <option value="">{form.district ? 'Select mandal' : 'Select district first'}</option>
+            {getMandals(form.district).map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium">Survey Number <span className="text-red-500">*</span></label>

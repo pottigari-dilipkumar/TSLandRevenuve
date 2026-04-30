@@ -5,6 +5,7 @@ import Alert from '../components/Alert';
 import PolygonMapPicker from '../components/PolygonMapPicker';
 import { registrationApi } from '../api/registrationApi';
 import { documentApi, marketValueApi } from '../api/citizenApi';
+import { DISTRICTS, getMandals } from '../utils/telanganaLocations';
 
 const STEPS = ['Property', 'Seller', 'Buyer', 'Witnesses', 'Documents', 'Review'];
 
@@ -227,23 +228,32 @@ export default function RegistrationFormPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-sm font-medium">District *</label>
-              <input
+              <select
                 className="input"
                 required
                 value={property.propertyDistrict}
-                onChange={(e) => setProperty((p) => ({ ...p, propertyDistrict: e.target.value }))}
+                onChange={(e) => {
+                  setProperty((p) => ({ ...p, propertyDistrict: e.target.value, propertyVillage: '' }));
+                }}
                 onBlur={lookupMarketValue}
-              />
+              >
+                <option value="">Select district</option>
+                {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Village / Area *</label>
-              <input
+              <label className="mb-1 block text-sm font-medium">Village / Mandal *</label>
+              <select
                 className="input"
                 required
                 value={property.propertyVillage}
                 onChange={(e) => setProperty((p) => ({ ...p, propertyVillage: e.target.value }))}
                 onBlur={lookupMarketValue}
-              />
+                disabled={!property.propertyDistrict}
+              >
+                <option value="">{property.propertyDistrict ? 'Select mandal' : 'Select district first'}</option>
+                {getMandals(property.propertyDistrict).map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
             </div>
           </div>
           <div>

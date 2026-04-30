@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Alert from '../components/Alert';
 import { landApi } from '../api/landApi';
+import { DISTRICTS, getMandals } from '../utils/telanganaLocations';
 
 const LAND_TYPES = ['PRIVATE', 'GOVERNMENT', 'FOREST', 'ASSIGNED', 'INAM', 'WAQF', 'NALA_CONVERTED'];
 
@@ -29,6 +30,7 @@ export default function LandFormPage() {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+  const handleDistrictChange = (value) => setForm((prev) => ({ ...prev, district: value, village: '' }));
 
   // Load owners list
   useEffect(() => {
@@ -123,21 +125,28 @@ export default function LandFormPage() {
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">District</label>
-            <input
+            <select
               className="input"
               required
               value={form.district}
-              onChange={(e) => handleChange('district', e.target.value)}
-            />
+              onChange={(e) => handleDistrictChange(e.target.value)}
+            >
+              <option value="">Select district</option>
+              {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Village</label>
-            <input
+            <label className="mb-1 block text-sm font-medium">Village / Mandal</label>
+            <select
               className="input"
               required
               value={form.village}
               onChange={(e) => handleChange('village', e.target.value)}
-            />
+              disabled={!form.district}
+            >
+              <option value="">{form.district ? 'Select mandal' : 'Select district first'}</option>
+              {getMandals(form.district).map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">Area In Acres</label>

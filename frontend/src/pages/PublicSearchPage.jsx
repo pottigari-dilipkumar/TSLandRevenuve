@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Search, MapPin, AlertTriangle, FileText } from 'lucide-react';
 import Alert from '../components/Alert';
 import { landApi } from '../api/landApi';
+import { DISTRICTS, getMandals } from '../utils/telanganaLocations';
 
 const LAND_TYPE_COLORS = {
   PRIVATE: 'bg-emerald-100 text-emerald-700',
@@ -20,6 +21,7 @@ export default function PublicSearchPage() {
   const [error, setError] = useState('');
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+  const setDistrict = (v) => setForm((p) => ({ ...p, district: v, village: '' }));
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -47,11 +49,17 @@ export default function PublicSearchPage() {
       <form className="card grid gap-4 md:grid-cols-3" onSubmit={handleSearch}>
         <div>
           <label className="mb-1 block text-sm font-medium">District</label>
-          <input className="input" placeholder="e.g. Rangareddy" value={form.district} onChange={(e) => set('district', e.target.value)} />
+          <select className="input" value={form.district} onChange={(e) => setDistrict(e.target.value)}>
+            <option value="">All districts</option>
+            {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium">Village / Mandal</label>
-          <input className="input" placeholder="e.g. Shamshabad" value={form.village} onChange={(e) => set('village', e.target.value)} />
+          <select className="input" value={form.village} onChange={(e) => set('village', e.target.value)} disabled={!form.district}>
+            <option value="">{form.district ? 'All mandals' : 'Select district first'}</option>
+            {getMandals(form.district).map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium">Survey Number</label>
