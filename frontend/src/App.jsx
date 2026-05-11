@@ -22,6 +22,8 @@ import MutationFormPage from './pages/MutationFormPage';
 import MutationDetailPage from './pages/MutationDetailPage';
 import PublicSearchPage from './pages/PublicSearchPage';
 import EncumbranceCertificatePage from './pages/EncumbranceCertificatePage';
+import LandMapPage from './pages/LandMapPage';
+import SaleRequestFormPage from './pages/SaleRequestFormPage';
 import { ROLES } from './utils/roles';
 
 export default function App() {
@@ -43,6 +45,7 @@ export default function App() {
           <Route element={<ProtectedRoute roles={[ROLES.CITIZEN]} />}>
             <Route path="/citizen/dashboard" element={<CitizenDashboardPage />} />
             <Route path="/citizen/profile" element={<CitizenProfilePage />} />
+            <Route path="/registrations/sale-request/new" element={<SaleRequestFormPage />} />
           </Route>
 
           {/* Market values — all roles */}
@@ -63,6 +66,8 @@ export default function App() {
           {/* Registrations */}
           <Route element={<ProtectedRoute roles={[ROLES.SRO, ROLES.SRO_ASSISTANT, ROLES.ADMIN, ROLES.REVENUE_OFFICER]} />}>
             <Route path="/registrations" element={<RegistrationListPage />} />
+          </Route>
+          <Route element={<ProtectedRoute roles={[ROLES.SRO, ROLES.SRO_ASSISTANT, ROLES.ADMIN, ROLES.REVENUE_OFFICER, ROLES.CITIZEN]} />}>
             <Route path="/registrations/:ref" element={<RegistrationDetailPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={[ROLES.SRO, ROLES.SRO_ASSISTANT, ROLES.ADMIN]} />}>
@@ -75,6 +80,9 @@ export default function App() {
           <Route element={<ProtectedRoute roles={[ROLES.ADMIN, ROLES.DATA_ENTRY, ROLES.CITIZEN]} />}>
             <Route path="/mutations/new" element={<MutationFormPage />} />
           </Route>
+
+          {/* Land Map — accessible to all logged-in users */}
+          <Route path="/map" element={<LandMapPage />} />
 
           {/* Public search & EC — accessible to all logged-in users */}
           <Route path="/public/search" element={<PublicSearchPage />} />

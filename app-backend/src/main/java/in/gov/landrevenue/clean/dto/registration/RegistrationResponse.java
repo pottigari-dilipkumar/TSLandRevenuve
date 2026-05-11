@@ -42,6 +42,14 @@ public record RegistrationResponse(
         Instant submittedAt,
         Instant decidedAt,
 
+        // Citizen checker-maker flow
+        boolean initiatedByCitizen,
+        Long sellerUserId,
+        Long buyerUserId,
+        Instant buyerApprovedAt,
+        Long sroAssistantUserId,
+        String revisionNotes,
+
         List<WitnessResponse> witnesses,
         List<DocumentResponse> documents,
 

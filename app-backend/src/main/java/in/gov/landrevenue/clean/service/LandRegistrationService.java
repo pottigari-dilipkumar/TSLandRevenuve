@@ -33,6 +33,7 @@ public class LandRegistrationService {
     private final MarketValueRepository marketValueRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final NotificationBellService notificationBellService;
     private final RegistrationBlockchainEventRepository eventRepository;
     private final BlockchainRegistrationGateway blockchainGateway;
     private final LandRecordRepository landRecordRepository;
@@ -45,6 +46,7 @@ public class LandRegistrationService {
                                     MarketValueRepository marketValueRepository,
                                     UserRepository userRepository,
                                     NotificationService notificationService,
+                                    NotificationBellService notificationBellService,
                                     RegistrationBlockchainEventRepository eventRepository,
                                     BlockchainRegistrationGateway blockchainGateway,
                                     LandRecordRepository landRecordRepository,
@@ -53,6 +55,7 @@ public class LandRegistrationService {
         this.marketValueRepository = marketValueRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.notificationBellService = notificationBellService;
         this.eventRepository = eventRepository;
         this.blockchainGateway = blockchainGateway;
         this.landRecordRepository = landRecordRepository;
@@ -187,6 +190,8 @@ public class LandRegistrationService {
 
         notificationService.notifyRegistrationApproved(reg.getBuyerEmail(), reg.getBuyerMobile(),
                 reg.getSellerEmail(), reg.getSellerMobile(), registrationRef);
+        notificationBellService.onApproved(saved.getSellerUserId(), saved.getBuyerAadhaar(),
+                saved.getBuyerName(), registrationRef, saved.getPropertySurveyNumber());
         return toResponse(saved);
     }
 
@@ -208,6 +213,8 @@ public class LandRegistrationService {
 
         notificationService.notifyRegistrationRejected(reg.getBuyerEmail(), reg.getBuyerMobile(),
                 reg.getSellerEmail(), reg.getSellerMobile(), registrationRef, reason);
+        notificationBellService.onRejected(saved.getSellerUserId(), saved.getBuyerAadhaar(),
+                registrationRef, saved.getPropertySurveyNumber(), reason);
         return toResponse(saved);
     }
 
@@ -229,6 +236,213 @@ public class LandRegistrationService {
     @Transactional(readOnly = true)
     public List<RegistrationResponse> getForCitizen(String aadhaarNumber) {
         return registrationRepository.findByPartyAadhaar(aadhaarNumber).stream().map(this::toResponse).toList();
+    }
+
+    /** Citizen creates a sale request for a land they own. */
+    @Transactional
+    public RegistrationResponse createSaleRequest(SaleRequestCreateRequest request, String sellerUsername) {
+        User seller = userRepository.findByUsername(sellerUsername)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + sellerUsername));
+
+        LandRecord land = landRecordRepository.findById(request.landRecordId())
+                .orElseThrow(() -> new IllegalArgumentException("Land record not found: " + request.landRecordId()));
+
+        if (land.getOwner() == null || !land.getOwner().getNationalId().equals(seller.getAadhaarNumber())) {
+            throw new IllegalStateException("You can only sell land that you own");
+        }
+
+        LandRegistration reg = new LandRegistration();
+        reg.setRegistrationRef(UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase());
+        reg.setStatus(RegistrationStatus.DRAFT);
+        reg.setInitiatedByCitizen(true);
+        reg.setSellerUserId(seller.getId());
+        reg.setDraftedByUserId(seller.getId());
+
+        reg.setPropertyDistrict(land.getDistrict());
+        reg.setPropertyVillage(land.getVillage());
+        reg.setPropertySurveyNumber(land.getSurveyNumber());
+        reg.setPropertyAreaInAcres(land.getAreaInAcres());
+        reg.setPropertyGeometry(land.getGeometry());
+        reg.setPropertyPlusCode(land.getPlusCode());
+        reg.setConsiderationAmount(request.considerationAmount());
+
+        marketValueRepository.findCurrentRate(land.getDistrict(), land.getVillage())
+                .ifPresent(mv -> {
+                    reg.setMarketValuePerAcre(mv.getRatePerAcre());
+                    java.math.BigDecimal total = mv.getRatePerAcre().multiply(land.getAreaInAcres())
+                            .setScale(2, java.math.RoundingMode.HALF_UP);
+                    reg.setTotalMarketValue(total);
+                    reg.setStampDuty(total.multiply(STAMP_DUTY_RATE).setScale(2, java.math.RoundingMode.HALF_UP));
+                });
+
+        reg.setSellerName(seller.getFullName() != null ? seller.getFullName() : seller.getUsername());
+        reg.setSellerAadhaar(seller.getAadhaarNumber());
+        reg.setSellerMobile(seller.getMobile());
+        reg.setSellerEmail(seller.getEmail());
+        reg.setSellerAddress(seller.getAddress());
+
+        reg.setBuyerName(request.buyerName());
+        reg.setBuyerAadhaar(request.buyerAadhaar());
+        reg.setBuyerMobile(request.buyerMobile());
+        reg.setBuyerEmail(request.buyerEmail());
+        reg.setBuyerAddress(request.buyerAddress());
+        reg.setNotes(request.notes());
+        reg.setCreatedAt(Instant.now());
+
+        LandRegistration saved = registrationRepository.save(reg);
+        logEvent(saved.getRegistrationRef(), "DRAFTED", seller.getUsername(), "CITIZEN",
+                "Sale request created by citizen seller " + seller.getUsername());
+        return toResponse(saved);
+    }
+
+    /** Seller submits sale request to buyer for consent. DRAFT → AWAITING_BUYER_APPROVAL */
+    @Transactional
+    public RegistrationResponse sellerSubmit(String ref, String sellerUsername) {
+        LandRegistration reg = findByRef(ref);
+        verifyIsSeller(reg, sellerUsername);
+        if (reg.getStatus() != RegistrationStatus.DRAFT && reg.getStatus() != RegistrationStatus.REVISION_REQUIRED) {
+            throw new IllegalStateException("Cannot submit in current status: " + reg.getStatus());
+        }
+        reg.setStatus(RegistrationStatus.AWAITING_BUYER_APPROVAL);
+        reg.setSubmittedAt(Instant.now());
+        reg.setRevisionNotes(null);
+        LandRegistration saved = registrationRepository.save(reg);
+        logEvent(ref, "SUBMITTED_TO_BUYER", sellerUsername, "CITIZEN",
+                "Seller submitted for buyer approval");
+        notificationBellService.onSellerSubmitted(saved.getSellerUserId(), saved.getBuyerAadhaar(),
+                ref, saved.getPropertySurveyNumber(), saved.getSellerName());
+        return toResponse(saved);
+    }
+
+    /** Buyer consents to the sale. AWAITING_BUYER_APPROVAL → PENDING_REVIEW */
+    @Transactional
+    public RegistrationResponse buyerApprove(String ref, String buyerUsername) {
+        User buyer = userRepository.findByUsername(buyerUsername)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + buyerUsername));
+        LandRegistration reg = findByRef(ref);
+        if (reg.getStatus() != RegistrationStatus.AWAITING_BUYER_APPROVAL) {
+            throw new IllegalStateException("Registration is not awaiting buyer approval");
+        }
+        if (!reg.getBuyerAadhaar().equals(buyer.getAadhaarNumber())) {
+            throw new IllegalStateException("Your Aadhaar does not match the buyer on this registration");
+        }
+        reg.setStatus(RegistrationStatus.PENDING_REVIEW);
+        reg.setBuyerUserId(buyer.getId());
+        reg.setBuyerApprovedAt(Instant.now());
+        LandRegistration saved = registrationRepository.save(reg);
+        logEvent(ref, "BUYER_APPROVED", buyerUsername, "CITIZEN",
+                "Buyer " + buyerUsername + " consented to the sale");
+        notificationBellService.onBuyerApproved(saved.getSellerUserId(), saved.getBuyerName(),
+                ref, saved.getPropertySurveyNumber());
+        return toResponse(saved);
+    }
+
+    /** Buyer rejects the sale. AWAITING_BUYER_APPROVAL → BUYER_REJECTED */
+    @Transactional
+    public RegistrationResponse buyerReject(String ref, String reason, String buyerUsername) {
+        User buyer = userRepository.findByUsername(buyerUsername)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + buyerUsername));
+        LandRegistration reg = findByRef(ref);
+        if (reg.getStatus() != RegistrationStatus.AWAITING_BUYER_APPROVAL) {
+            throw new IllegalStateException("Registration is not awaiting buyer approval");
+        }
+        if (!reg.getBuyerAadhaar().equals(buyer.getAadhaarNumber())) {
+            throw new IllegalStateException("Your Aadhaar does not match the buyer on this registration");
+        }
+        reg.setStatus(RegistrationStatus.BUYER_REJECTED);
+        reg.setRejectionReason(reason);
+        reg.setDecidedAt(Instant.now());
+        LandRegistration saved = registrationRepository.save(reg);
+        logEvent(ref, "BUYER_REJECTED", buyerUsername, "CITIZEN",
+                "Buyer rejected the sale: " + reason);
+        notificationBellService.onBuyerRejected(saved.getSellerUserId(), saved.getBuyerName(),
+                ref, saved.getPropertySurveyNumber(), reason);
+        return toResponse(saved);
+    }
+
+    /** SRO Assistant sends back for revision. PENDING_REVIEW → REVISION_REQUIRED */
+    @Transactional
+    public RegistrationResponse sroAssistantSendBack(String ref, String notes, String assistantUsername) {
+        User assistant = userRepository.findByUsername(assistantUsername)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + assistantUsername));
+        LandRegistration reg = findByRef(ref);
+        if (reg.getStatus() != RegistrationStatus.PENDING_REVIEW) {
+            throw new IllegalStateException("Registration is not under review");
+        }
+        reg.setStatus(RegistrationStatus.REVISION_REQUIRED);
+        reg.setRevisionNotes(notes);
+        reg.setSroAssistantUserId(assistant.getId());
+        reg.setSroAssistantReviewedAt(Instant.now());
+        LandRegistration saved = registrationRepository.save(reg);
+        logEvent(ref, "SENT_BACK", assistantUsername, "SRO_ASSISTANT",
+                "Sent back for revision by " + assistantUsername + ": " + notes);
+        notificationBellService.onRevisionRequired(saved.getSellerUserId(), ref,
+                saved.getPropertySurveyNumber(), notes);
+        return toResponse(saved);
+    }
+
+    /** SRO Assistant forwards to SRO for final approval. PENDING_REVIEW → PENDING_APPROVAL */
+    @Transactional
+    public RegistrationResponse sroAssistantForward(String ref, String assistantUsername) {
+        User assistant = userRepository.findByUsername(assistantUsername)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + assistantUsername));
+        LandRegistration reg = findByRef(ref);
+        if (reg.getStatus() != RegistrationStatus.PENDING_REVIEW) {
+            throw new IllegalStateException("Registration is not under review");
+        }
+        reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
+        reg.setSroAssistantUserId(assistant.getId());
+        reg.setSroAssistantReviewedAt(Instant.now());
+        LandRegistration saved = registrationRepository.save(reg);
+        logEvent(ref, "FORWARDED_TO_SRO", assistantUsername, "SRO_ASSISTANT",
+                "Forwarded to SRO for final approval by " + assistantUsername);
+        notificationBellService.onForwardedToSro(ref, saved.getPropertySurveyNumber());
+        return toResponse(saved);
+    }
+
+    /** Seller resubmits after revision. REVISION_REQUIRED → PENDING_REVIEW */
+    @Transactional
+    public RegistrationResponse sellerResubmit(String ref, String sellerUsername) {
+        LandRegistration reg = findByRef(ref);
+        verifyIsSeller(reg, sellerUsername);
+        if (reg.getStatus() != RegistrationStatus.REVISION_REQUIRED) {
+            throw new IllegalStateException("Registration is not awaiting revision");
+        }
+        reg.setStatus(RegistrationStatus.PENDING_REVIEW);
+        reg.setRevisionNotes(null);
+        LandRegistration saved = registrationRepository.save(reg);
+        logEvent(ref, "RESUBMITTED", sellerUsername, "CITIZEN",
+                "Seller resubmitted after revision");
+        notificationBellService.onResubmitted(ref, saved.getPropertySurveyNumber());
+        return toResponse(saved);
+    }
+
+    /** Get all sale requests initiated by the given seller citizen. */
+    @Transactional(readOnly = true)
+    public List<RegistrationResponse> getMySaleRequests(String sellerUsername) {
+        User seller = userRepository.findByUsername(sellerUsername)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + sellerUsername));
+        return registrationRepository.findBySellerUserIdOrderByCreatedAtDesc(seller.getId())
+                .stream().map(this::toResponse).toList();
+    }
+
+    /** Get registrations where the given buyer citizen needs to approve. */
+    @Transactional(readOnly = true)
+    public List<RegistrationResponse> getPendingBuyerApprovals(String buyerUsername) {
+        User buyer = userRepository.findByUsername(buyerUsername)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + buyerUsername));
+        if (buyer.getAadhaarNumber() == null) return List.of();
+        return registrationRepository.findByBuyerAadhaarAndStatusOrderByCreatedAtDesc(
+                buyer.getAadhaarNumber(), RegistrationStatus.AWAITING_BUYER_APPROVAL)
+                .stream().map(this::toResponse).toList();
+    }
+
+    private void verifyIsSeller(LandRegistration reg, String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+        if (!user.getId().equals(reg.getSellerUserId())) {
+            throw new IllegalStateException("Only the seller can perform this action");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -348,6 +562,8 @@ public class LandRegistrationService {
                 reg.getDraftedByUserId(), reg.getApprovedByUserId(),
                 reg.getRejectionReason(), reg.getNotes(),
                 reg.getCreatedAt(), reg.getSubmittedAt(), reg.getDecidedAt(),
+                reg.isInitiatedByCitizen(), reg.getSellerUserId(), reg.getBuyerUserId(),
+                reg.getBuyerApprovedAt(), reg.getSroAssistantUserId(), reg.getRevisionNotes(),
                 witnesses, documents,
                 reg.getPropertyLatitude(), reg.getPropertyLongitude(),
                 reg.getPropertyGeometry(), reg.getPropertyPlusCode(),

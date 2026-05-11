@@ -1,18 +1,21 @@
 import {
   BarChart3, FileText, LayoutDashboard, LogOut, Receipt, ShieldCheck,
   PlusSquare, Menu, UserPlus, ClipboardList, User, TrendingUp, X, ChevronRight,
-  GitBranch, Search, FileCheck,
+  GitBranch, Search, FileCheck, Map, Handshake,
 } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { ROLES } from '../utils/roles';
+import ChatWidget from '../components/ChatWidget';
+import NotificationBell from '../components/NotificationBell';
 
 const allNavItems = [
   { to: '/dashboard',         label: 'Dashboard',       icon: LayoutDashboard, roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER, ROLES.DATA_ENTRY] },
-  { to: '/citizen/dashboard', label: 'My Dashboard',    icon: LayoutDashboard, roles: [ROLES.CITIZEN] },
-  { to: '/citizen/profile',   label: 'My Profile',      icon: User,            roles: [ROLES.CITIZEN] },
-  { to: '/market-values',     label: 'Market Values',   icon: TrendingUp,      roles: Object.values(ROLES) },
+  { to: '/citizen/dashboard',                label: 'My Dashboard',     icon: LayoutDashboard, roles: [ROLES.CITIZEN] },
+  { to: '/citizen/profile',                  label: 'My Profile',       icon: User,            roles: [ROLES.CITIZEN] },
+  { to: '/registrations/sale-request/new',   label: 'Initiate Sale',    icon: Handshake,       roles: [ROLES.CITIZEN] },
+  { to: '/market-values',                    label: 'Market Values',    icon: TrendingUp,      roles: Object.values(ROLES) },
   { to: '/lands',             label: 'Land Records',    icon: FileText,        roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER, ROLES.DATA_ENTRY] },
   { to: '/owners/new',        label: 'Create Owner',    icon: UserPlus,        roles: [ROLES.ADMIN] },
   { to: '/lands/new',         label: 'Add Land Record', icon: PlusSquare,      roles: [ROLES.ADMIN, ROLES.DATA_ENTRY] },
@@ -21,6 +24,7 @@ const allNavItems = [
   { to: '/registrations/new', label: 'New Registration',icon: PlusSquare,      roles: [ROLES.SRO, ROLES.SRO_ASSISTANT, ROLES.ADMIN] },
   { to: '/mutations',         label: 'Mutations',        icon: GitBranch,       roles: [ROLES.ADMIN, ROLES.REVENUE_OFFICER, ROLES.DATA_ENTRY, ROLES.CITIZEN] },
   { to: '/mutations/new',     label: 'Apply Mutation',   icon: PlusSquare,      roles: [ROLES.CITIZEN, ROLES.DATA_ENTRY] },
+  { to: '/map',               label: 'Land Map',         icon: Map,             roles: Object.values(ROLES) },
   { to: '/public/search',     label: 'Property Search',  icon: Search,          roles: Object.values(ROLES) },
   { to: '/public/ec',         label: 'Encumbrance Cert', icon: FileCheck,       roles: Object.values(ROLES) },
   { to: '/users',             label: 'User Management',  icon: ShieldCheck,     roles: [ROLES.ADMIN] },
@@ -148,6 +152,7 @@ export default function MainLayout() {
             <p className="text-xs text-slate-400">Welcome back,</p>
             <h1 className="text-base font-semibold text-slate-900 leading-tight">{displayName}</h1>
           </div>
+          <NotificationBell />
           <div className="hidden sm:flex items-center gap-2 rounded-xl bg-brand-50 px-3 py-1.5">
             <span className="text-xs font-semibold text-brand-600">{roleLabel}</span>
           </div>
@@ -163,6 +168,9 @@ export default function MainLayout() {
           LRMS Portal &mdash; Land Revenue &amp; Registration System
         </footer>
       </div>
+
+      {/* Floating chat support — visible on all authenticated pages */}
+      <ChatWidget />
     </div>
   );
 }

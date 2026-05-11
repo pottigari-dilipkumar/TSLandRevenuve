@@ -6,6 +6,7 @@ public enum LandType {
     FOREST,          // Reserved forest land — cannot be transferred
     ASSIGNED,        // Government-assigned land (PPB holders) — restricted transfer
     INAM,            // Inam / grant land — restricted
-    WAQF,            // Waqf board property
-    NALA_CONVERTED   // Formerly agricultural, converted to non-agricultural (NALA)
+    WAQF,            // Waqf board / trust property
+    NALA_CONVERTED,  // Formerly agricultural, converted to non-agricultural (NALA)
+    LAKE             // Water body / lake / tank — protected, cannot be transferred
 }

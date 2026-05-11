@@ -14,6 +14,8 @@ public interface LandRegistrationRepository extends JpaRepository<LandRegistrati
     boolean existsByRegistrationRef(String registrationRef);
     List<LandRegistration> findByStatus(RegistrationStatus status);
     List<LandRegistration> findByStatusIn(List<RegistrationStatus> statuses);
+    List<LandRegistration> findBySellerUserIdOrderByCreatedAtDesc(Long sellerUserId);
+    List<LandRegistration> findByBuyerAadhaarAndStatusOrderByCreatedAtDesc(String buyerAadhaar, RegistrationStatus status);
 
     @Query("SELECT r FROM LandRegistration r WHERE r.sellerAadhaar = :aadhaar OR r.buyerAadhaar = :aadhaar ORDER BY r.createdAt DESC")
     List<LandRegistration> findByPartyAadhaar(@Param("aadhaar") String aadhaar);
@@ -22,4 +24,16 @@ public interface LandRegistrationRepository extends JpaRepository<LandRegistrati
     List<LandRegistration> findByWitnessAadhaar(@Param("aadhaar") String aadhaar);
 
     List<LandRegistration> findByPropertySurveyNumberIgnoreCaseOrderByCreatedAtAsc(String surveyNumber);
+
+    @Query("""
+            SELECT r FROM LandRegistration r
+            WHERE LOWER(r.propertyDistrict)     = LOWER(:district)
+              AND LOWER(r.propertyVillage)      = LOWER(:village)
+              AND LOWER(r.propertySurveyNumber) = LOWER(:surveyNumber)
+            ORDER BY r.createdAt ASC
+            """)
+    List<LandRegistration> findByProperty(
+            @Param("district") String district,
+            @Param("village")  String village,
+            @Param("surveyNumber") String surveyNumber);
 }

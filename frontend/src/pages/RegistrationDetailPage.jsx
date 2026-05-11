@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CheckCircle, XCircle, Upload, MapPin, Link2, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { CheckCircle, XCircle, Upload, MapPin, Link2, ShieldCheck, ArrowLeft, Send, RotateCcw, AlertTriangle } from 'lucide-react';
 import { registrationApi } from '../api/registrationApi';
 import { documentApi } from '../api/citizenApi';
 import { useAuthStore } from '../store/authStore';
@@ -15,10 +15,14 @@ const DOCUMENT_TYPES = [
 ];
 
 const STATUS_META = {
-  DRAFT:            { cls: 'bg-slate-100 text-slate-600 border-slate-200',     label: 'Draft' },
-  PENDING_APPROVAL: { cls: 'bg-amber-50 text-amber-700 border-amber-200',      label: 'Pending Approval' },
-  APPROVED:         { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Approved' },
-  REJECTED:         { cls: 'bg-rose-50 text-rose-700 border-rose-200',          label: 'Rejected' },
+  DRAFT:                   { cls: 'bg-slate-100 text-slate-600 border-slate-200',       label: 'Draft' },
+  AWAITING_BUYER_APPROVAL: { cls: 'bg-blue-50 text-blue-700 border-blue-200',           label: 'Awaiting Buyer Approval' },
+  BUYER_REJECTED:          { cls: 'bg-rose-50 text-rose-700 border-rose-200',            label: 'Buyer Rejected' },
+  PENDING_REVIEW:          { cls: 'bg-purple-50 text-purple-700 border-purple-200',     label: 'Under SRO Assistant Review' },
+  REVISION_REQUIRED:       { cls: 'bg-amber-50 text-amber-700 border-amber-200',        label: 'Revision Required' },
+  PENDING_APPROVAL:        { cls: 'bg-amber-50 text-amber-700 border-amber-200',        label: 'Pending SRO Approval' },
+  APPROVED:                { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200',  label: 'Approved' },
+  REJECTED:                { cls: 'bg-rose-50 text-rose-700 border-rose-200',           label: 'Rejected' },
 };
 
 const CHAIN_STATUS = {
@@ -77,6 +81,8 @@ export default function RegistrationDetailPage() {
   const [activeTab, setActiveTab] = useState('details');
 
   const canApprove = [ROLES.SRO, ROLES.ADMIN].includes(user?.role);
+  const isSroAssistant = [ROLES.SRO_ASSISTANT, ROLES.ADMIN].includes(user?.role);
+  const isCitizen = user?.role === ROLES.CITIZEN;
 
   const loadReg = async () => {
     try {
@@ -112,6 +118,40 @@ export default function RegistrationDetailPage() {
     if (!reason) return;
     try { await registrationApi.reject(ref, reason); loadReg(); loadEvents(); }
     catch (err) { setError(err?.response?.data?.message || 'Failed to reject'); }
+  };
+
+  const handleSellerSubmit = async () => {
+    try { await registrationApi.sellerSubmit(ref); loadReg(); loadEvents(); }
+    catch (err) { setError(err?.response?.data?.message || 'Failed to submit'); }
+  };
+
+  const handleSellerResubmit = async () => {
+    try { await registrationApi.sellerResubmit(ref); loadReg(); loadEvents(); }
+    catch (err) { setError(err?.response?.data?.message || 'Failed to resubmit'); }
+  };
+
+  const handleBuyerApprove = async () => {
+    try { await registrationApi.buyerApprove(ref); loadReg(); loadEvents(); }
+    catch (err) { setError(err?.response?.data?.message || 'Failed to approve'); }
+  };
+
+  const handleBuyerReject = async () => {
+    const reason = prompt('Enter reason for rejection:');
+    if (!reason) return;
+    try { await registrationApi.buyerReject(ref, reason); loadReg(); loadEvents(); }
+    catch (err) { setError(err?.response?.data?.message || 'Failed to reject'); }
+  };
+
+  const handleSendBack = async () => {
+    const notes = prompt('Enter revision notes for the seller:');
+    if (!notes) return;
+    try { await registrationApi.sendBack(ref, notes); loadReg(); loadEvents(); }
+    catch (err) { setError(err?.response?.data?.message || 'Failed to send back'); }
+  };
+
+  const handleForwardToSro = async () => {
+    try { await registrationApi.forwardToSro(ref); loadReg(); loadEvents(); }
+    catch (err) { setError(err?.response?.data?.message || 'Failed to forward'); }
   };
 
   const handleUpload = async (e) => {
@@ -165,7 +205,65 @@ export default function RegistrationDetailPage() {
 
       <Alert message={error} onDismiss={() => setError('')} />
 
-      {/* Actions */}
+      {/* Workflow Actions */}
+
+      {/* Seller: submit to buyer */}
+      {isCitizen && reg.status === 'DRAFT' && reg.initiatedByCitizen && (
+        <div className="flex gap-3 items-center">
+          <button className="btn-primary" onClick={handleSellerSubmit}>
+            <Send size={15} /> Send to Buyer for Approval
+          </button>
+          <p className="text-xs text-slate-500">The buyer must consent before the SRO can process this registration.</p>
+        </div>
+      )}
+
+      {/* Seller: resubmit after revision */}
+      {isCitizen && reg.status === 'REVISION_REQUIRED' && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-2">
+          <div className="flex items-center gap-2 text-amber-800 font-semibold text-sm">
+            <AlertTriangle size={15} /> Revision Required
+          </div>
+          <p className="text-sm text-amber-700">{reg.revisionNotes}</p>
+          <button className="btn-primary text-sm" onClick={handleSellerResubmit}>
+            <RotateCcw size={14} /> Resubmit for Review
+          </button>
+        </div>
+      )}
+
+      {/* Buyer: approve or reject consent */}
+      {isCitizen && reg.status === 'AWAITING_BUYER_APPROVAL' && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-2">
+          <p className="text-sm font-semibold text-blue-900">
+            {reg.sellerName} has initiated a sale of this land to you.
+          </p>
+          <p className="text-xs text-blue-700">
+            Survey: {reg.propertySurveyNumber} · {reg.propertyVillage} · {reg.propertyAreaInAcres} acres
+            {reg.considerationAmount && ` · ₹${Number(reg.considerationAmount).toLocaleString('en-IN')}`}
+          </p>
+          <div className="flex gap-3 pt-1">
+            <button className="btn-primary bg-emerald-600 hover:opacity-90 text-sm" onClick={handleBuyerApprove}>
+              <CheckCircle size={14} /> I Consent to This Sale
+            </button>
+            <button className="btn-danger text-sm" onClick={handleBuyerReject}>
+              <XCircle size={14} /> Reject Sale
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SRO Assistant: send back or forward */}
+      {isSroAssistant && reg.status === 'PENDING_REVIEW' && (
+        <div className="flex gap-3">
+          <button className="btn-primary" onClick={handleForwardToSro}>
+            <CheckCircle size={15} /> Forward to SRO
+          </button>
+          <button className="btn-secondary" onClick={handleSendBack}>
+            <RotateCcw size={15} /> Send Back for Revision
+          </button>
+        </div>
+      )}
+
+      {/* SRO: final approve / reject */}
       {reg.status === 'PENDING_APPROVAL' && canApprove && (
         <div className="flex gap-3">
           <button className="btn-primary bg-emerald-600 hover:opacity-90" onClick={handleApprove}>
@@ -342,7 +440,7 @@ export default function RegistrationDetailPage() {
             ))}
           </div>
 
-          {['DRAFT', 'PENDING_APPROVAL'].includes(reg.status) && (
+          {['DRAFT', 'AWAITING_BUYER_APPROVAL', 'REVISION_REQUIRED', 'PENDING_REVIEW', 'PENDING_APPROVAL'].includes(reg.status) && (
             <form className="mt-4 border-t border-slate-100 pt-4 space-y-3" onSubmit={handleUpload}>
               <p className="text-sm font-semibold text-slate-700">Upload Document</p>
               <div className="grid grid-cols-2 gap-3">

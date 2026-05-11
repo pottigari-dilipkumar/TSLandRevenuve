@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { BarChart3, MapPin, Shield, FileCheck } from 'lucide-react';
+import ChatWidget from '../components/ChatWidget';
 
 const features = [
   { icon: Shield,    label: 'Secure Aadhaar Auth',      desc: 'OTP-based citizen identity verification' },
@@ -76,6 +77,9 @@ export default function AuthLayout() {
           </p>
         </div>
       </div>
+
+      {/* Chat support available before login */}
+      <ChatWidget />
     </div>
   );
 }

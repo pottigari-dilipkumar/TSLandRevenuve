@@ -102,6 +102,24 @@ public class LandRegistration {
     private Long draftedByUserId;
     private Long approvedByUserId;
 
+    /** True when the registration was initiated by a citizen seller (not by SRO staff) */
+    @Column(columnDefinition = "boolean default false")
+    private Boolean initiatedByCitizen = Boolean.FALSE;
+
+    /** User.id of the citizen who is the seller (set for citizen-initiated requests) */
+    private Long sellerUserId;
+
+    /** User.id of the citizen who is the buyer (set when buyer approves) */
+    private Long buyerUserId;
+
+    private Instant buyerApprovedAt;
+
+    private Long sroAssistantUserId;
+    private Instant sroAssistantReviewedAt;
+
+    @Column(length = 2000)
+    private String revisionNotes;
+
     @Column(length = 1000)
     private String rejectionReason;
 
@@ -165,6 +183,20 @@ public class LandRegistration {
     public void setDraftedByUserId(Long draftedByUserId) { this.draftedByUserId = draftedByUserId; }
     public Long getApprovedByUserId() { return approvedByUserId; }
     public void setApprovedByUserId(Long approvedByUserId) { this.approvedByUserId = approvedByUserId; }
+    public boolean isInitiatedByCitizen() { return Boolean.TRUE.equals(initiatedByCitizen); }
+    public void setInitiatedByCitizen(boolean initiatedByCitizen) { this.initiatedByCitizen = initiatedByCitizen; }
+    public Long getSellerUserId() { return sellerUserId; }
+    public void setSellerUserId(Long sellerUserId) { this.sellerUserId = sellerUserId; }
+    public Long getBuyerUserId() { return buyerUserId; }
+    public void setBuyerUserId(Long buyerUserId) { this.buyerUserId = buyerUserId; }
+    public Instant getBuyerApprovedAt() { return buyerApprovedAt; }
+    public void setBuyerApprovedAt(Instant buyerApprovedAt) { this.buyerApprovedAt = buyerApprovedAt; }
+    public Long getSroAssistantUserId() { return sroAssistantUserId; }
+    public void setSroAssistantUserId(Long sroAssistantUserId) { this.sroAssistantUserId = sroAssistantUserId; }
+    public Instant getSroAssistantReviewedAt() { return sroAssistantReviewedAt; }
+    public void setSroAssistantReviewedAt(Instant sroAssistantReviewedAt) { this.sroAssistantReviewedAt = sroAssistantReviewedAt; }
+    public String getRevisionNotes() { return revisionNotes; }
+    public void setRevisionNotes(String revisionNotes) { this.revisionNotes = revisionNotes; }
     public String getRejectionReason() { return rejectionReason; }
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public String getNotes() { return notes; }

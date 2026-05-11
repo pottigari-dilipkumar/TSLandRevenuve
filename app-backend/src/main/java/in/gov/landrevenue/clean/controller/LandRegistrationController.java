@@ -25,6 +25,8 @@ public class LandRegistrationController {
         this.userRepository = userRepository;
     }
 
+    // ── Staff: create draft ───────────────────────────────────────────────────
+
     @PostMapping
     @PreAuthorize("hasAnyRole('SRO', 'SRO_ASSISTANT', 'ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
@@ -33,6 +35,8 @@ public class LandRegistrationController {
         Long userId = resolveUserId(principal.getName());
         return registrationService.createDraft(request, userId);
     }
+
+    // ── List / detail ─────────────────────────────────────────────────────────
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SRO', 'SRO_ASSISTANT', 'ADMIN', 'REVENUE_OFFICER')")
@@ -44,15 +48,9 @@ public class LandRegistrationController {
     }
 
     @GetMapping("/{ref}")
-    @PreAuthorize("hasAnyRole('SRO', 'SRO_ASSISTANT', 'ADMIN', 'REVENUE_OFFICER')")
+    @PreAuthorize("hasAnyRole('SRO', 'SRO_ASSISTANT', 'ADMIN', 'REVENUE_OFFICER', 'CITIZEN')")
     public RegistrationResponse getByRef(@PathVariable String ref) {
         return registrationService.getByRef(ref);
-    }
-
-    @PutMapping("/{ref}/submit")
-    @PreAuthorize("hasAnyRole('SRO', 'SRO_ASSISTANT', 'ADMIN')")
-    public RegistrationResponse submitForApproval(@PathVariable String ref, Principal principal) {
-        return registrationService.submitForApproval(ref, principal.getName());
     }
 
     @GetMapping("/{ref}/events")
@@ -60,6 +58,70 @@ public class LandRegistrationController {
     public List<BlockchainEventResponse> getEvents(@PathVariable String ref) {
         return registrationService.getEvents(ref);
     }
+
+    // ── Staff submit (existing) ───────────────────────────────────────────────
+
+    @PutMapping("/{ref}/submit")
+    @PreAuthorize("hasAnyRole('SRO', 'SRO_ASSISTANT', 'ADMIN')")
+    public RegistrationResponse submitForApproval(@PathVariable String ref, Principal principal) {
+        return registrationService.submitForApproval(ref, principal.getName());
+    }
+
+    // ── Citizen: create & manage sale request ────────────────────────────────
+
+    @PostMapping("/sale-request")
+    @PreAuthorize("hasRole('CITIZEN')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public RegistrationResponse createSaleRequest(@Valid @RequestBody SaleRequestCreateRequest request,
+                                                   Principal principal) {
+        return registrationService.createSaleRequest(request, principal.getName());
+    }
+
+    @PutMapping("/{ref}/seller-submit")
+    @PreAuthorize("hasRole('CITIZEN')")
+    public RegistrationResponse sellerSubmit(@PathVariable String ref, Principal principal) {
+        return registrationService.sellerSubmit(ref, principal.getName());
+    }
+
+    @PutMapping("/{ref}/seller-resubmit")
+    @PreAuthorize("hasRole('CITIZEN')")
+    public RegistrationResponse sellerResubmit(@PathVariable String ref, Principal principal) {
+        return registrationService.sellerResubmit(ref, principal.getName());
+    }
+
+    // ── Citizen: buyer consent ────────────────────────────────────────────────
+
+    @PutMapping("/{ref}/buyer-approve")
+    @PreAuthorize("hasRole('CITIZEN')")
+    public RegistrationResponse buyerApprove(@PathVariable String ref, Principal principal) {
+        return registrationService.buyerApprove(ref, principal.getName());
+    }
+
+    @PutMapping("/{ref}/buyer-reject")
+    @PreAuthorize("hasRole('CITIZEN')")
+    public RegistrationResponse buyerReject(@PathVariable String ref,
+                                             @RequestBody RegistrationApprovalRequest request,
+                                             Principal principal) {
+        return registrationService.buyerReject(ref, request.reason(), principal.getName());
+    }
+
+    // ── SRO Assistant: review ─────────────────────────────────────────────────
+
+    @PutMapping("/{ref}/send-back")
+    @PreAuthorize("hasAnyRole('SRO_ASSISTANT', 'ADMIN')")
+    public RegistrationResponse sendBack(@PathVariable String ref,
+                                          @Valid @RequestBody RevisionNotesRequest request,
+                                          Principal principal) {
+        return registrationService.sroAssistantSendBack(ref, request.notes(), principal.getName());
+    }
+
+    @PutMapping("/{ref}/forward-to-sro")
+    @PreAuthorize("hasAnyRole('SRO_ASSISTANT', 'ADMIN')")
+    public RegistrationResponse forwardToSro(@PathVariable String ref, Principal principal) {
+        return registrationService.sroAssistantForward(ref, principal.getName());
+    }
+
+    // ── SRO: final approve / reject ───────────────────────────────────────────
 
     @PutMapping("/{ref}/approve")
     @PreAuthorize("hasAnyRole('SRO', 'ADMIN')")
@@ -75,6 +137,20 @@ public class LandRegistrationController {
                                         Principal principal) {
         Long userId = resolveUserId(principal.getName());
         return registrationService.reject(ref, request.reason(), userId);
+    }
+
+    // ── Citizen: my queues ────────────────────────────────────────────────────
+
+    @GetMapping("/my-sales")
+    @PreAuthorize("hasRole('CITIZEN')")
+    public List<RegistrationResponse> mySales(Principal principal) {
+        return registrationService.getMySaleRequests(principal.getName());
+    }
+
+    @GetMapping("/pending-my-approval")
+    @PreAuthorize("hasRole('CITIZEN')")
+    public List<RegistrationResponse> pendingMyApproval(Principal principal) {
+        return registrationService.getPendingBuyerApprovals(principal.getName());
     }
 
     private Long resolveUserId(String username) {
