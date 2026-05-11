@@ -154,7 +154,7 @@ public class NotificationBellService {
 
     @Transactional(readOnly = true)
     public long getUnreadCount(Long userId) {
-        return notifRepo.countByUserIdAndIsReadFalse(userId);
+        return notifRepo.countUnreadByUserId(userId);
     }
 
     @Transactional

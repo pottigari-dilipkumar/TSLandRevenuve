@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShieldCheck } from 'lucide-react';
 import Alert from '../components/Alert';
 import { authApi } from '../api/authApi';
 import { useAuthStore } from '../store/authStore';
+
+function maskAadhaar(aadhaar) {
+  if (!aadhaar || aadhaar.length < 4) return aadhaar || '—';
+  return 'XXXX XXXX ' + aadhaar.slice(-4);
+}
 
 export default function CitizenProfilePage() {
   const navigate = useNavigate();
@@ -37,10 +43,31 @@ export default function CitizenProfilePage() {
   };
 
   return (
-    <div className="mx-auto max-w-lg">
-      <h1 className="mb-6 text-xl font-bold">Complete Your Profile</h1>
+    <div className="mx-auto max-w-lg space-y-5">
+      <h1 className="text-xl font-bold">My Profile</h1>
+
+      {/* Aadhaar Identity Card */}
+      <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50 p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow">
+            <ShieldCheck size={20} />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500">Aadhaar Identity</p>
+            <p className="text-sm text-slate-500">Government of India · Unique Identification</p>
+          </div>
+        </div>
+        <p className="font-mono text-2xl font-bold tracking-[0.2em] text-indigo-900">
+          {maskAadhaar(user?.aadhaarNumber)}
+        </p>
+        <p className="mt-1 text-xs text-indigo-400">
+          This is your verified identity. It cannot be changed here.
+        </p>
+      </div>
+
       <Alert message={error} />
       <form className="card space-y-4" onSubmit={handleSubmit}>
+        <p className="text-sm font-semibold text-slate-700">Contact Details</p>
         <div>
           <label className="mb-1 block text-sm font-medium">Full Name *</label>
           <input

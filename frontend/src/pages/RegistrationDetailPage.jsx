@@ -80,9 +80,12 @@ export default function RegistrationDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
 
-  const canApprove = [ROLES.SRO, ROLES.ADMIN].includes(user?.role);
+  const canApprove    = [ROLES.SRO, ROLES.ADMIN].includes(user?.role);
   const isSroAssistant = [ROLES.SRO_ASSISTANT, ROLES.ADMIN].includes(user?.role);
-  const isCitizen = user?.role === ROLES.CITIZEN;
+  const isCitizen     = user?.role === ROLES.CITIZEN;
+  // Derived once reg is loaded — compare logged-in citizen's Aadhaar against the party Aadhaar on the record
+  const isSeller = isCitizen && !!user?.aadhaarNumber && reg != null && user.aadhaarNumber === reg.sellerAadhaar;
+  const isBuyer  = isCitizen && !!user?.aadhaarNumber && reg != null && user.aadhaarNumber === reg.buyerAadhaar;
 
   const loadReg = async () => {
     try {
@@ -208,7 +211,7 @@ export default function RegistrationDetailPage() {
       {/* Workflow Actions */}
 
       {/* Seller: submit to buyer */}
-      {isCitizen && reg.status === 'DRAFT' && reg.initiatedByCitizen && (
+      {isSeller && reg.status === 'DRAFT' && reg.initiatedByCitizen && (
         <div className="flex gap-3 items-center">
           <button className="btn-primary" onClick={handleSellerSubmit}>
             <Send size={15} /> Send to Buyer for Approval
@@ -218,7 +221,7 @@ export default function RegistrationDetailPage() {
       )}
 
       {/* Seller: resubmit after revision */}
-      {isCitizen && reg.status === 'REVISION_REQUIRED' && (
+      {isSeller && reg.status === 'REVISION_REQUIRED' && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-2">
           <div className="flex items-center gap-2 text-amber-800 font-semibold text-sm">
             <AlertTriangle size={15} /> Revision Required
@@ -231,7 +234,7 @@ export default function RegistrationDetailPage() {
       )}
 
       {/* Buyer: approve or reject consent */}
-      {isCitizen && reg.status === 'AWAITING_BUYER_APPROVAL' && (
+      {isBuyer && reg.status === 'AWAITING_BUYER_APPROVAL' && (
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-2">
           <p className="text-sm font-semibold text-blue-900">
             {reg.sellerName} has initiated a sale of this land to you.
