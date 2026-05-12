@@ -1,3 +1,7 @@
+// Copyright (c) 2026 DivaTech. All rights reserved.
+// Proprietary and confidential. Unauthorized copying or distribution is strictly prohibited.
+// Website: https://www.divatech.in | Contact: legal@divatech.in
+
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { FileText, AlertTriangle, IndianRupee, Scale } from 'lucide-react';

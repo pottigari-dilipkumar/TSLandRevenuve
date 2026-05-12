@@ -1,3 +1,7 @@
+// Copyright (c) 2026 DivaTech. All rights reserved.
+// Proprietary and confidential. Unauthorized copying or distribution is strictly prohibited.
+// Website: https://www.divatech.in | Contact: legal@divatech.in
+
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, XCircle, ArrowRight, User, MapPin, Calendar } from 'lucide-react';

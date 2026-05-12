@@ -1,3 +1,7 @@
+// Copyright (c) 2026 DivaTech. All rights reserved.
+// Proprietary and confidential. Unauthorized copying or distribution is strictly prohibited.
+// Website: https://www.divatech.in | Contact: legal@divatech.in
+
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FileText, MapPin, TrendingUp, User, PlusCircle, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';

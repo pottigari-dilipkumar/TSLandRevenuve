@@ -1,3 +1,7 @@
+// Copyright (c) 2026 DivaTech. All rights reserved.
+// Proprietary and confidential. Unauthorized copying or distribution is strictly prohibited.
+// Website: https://www.divatech.in | Contact: legal@divatech.in
+
 import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Trash2 } from 'lucide-react';
 import { sendChatMessage, sendPublicChatMessage, getChatHistory, clearChatHistory } from '../api/chatApi';

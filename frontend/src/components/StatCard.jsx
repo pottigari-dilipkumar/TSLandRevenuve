@@ -1,3 +1,7 @@
+// Copyright (c) 2026 DivaTech. All rights reserved.
+// Proprietary and confidential. Unauthorized copying or distribution is strictly prohibited.
+// Website: https://www.divatech.in | Contact: legal@divatech.in
+
 export default function StatCard({ title, value, subtitle, icon: Icon, trend, accentColor = 'brand' }) {
   const accent = {
     brand:   { bg: 'bg-brand-50',   text: 'text-brand-500',   bar: 'from-brand-400 to-brand-600' },

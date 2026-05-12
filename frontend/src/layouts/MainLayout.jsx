@@ -1,3 +1,7 @@
+// Copyright (c) 2026 DivaTech. All rights reserved.
+// Proprietary and confidential. Unauthorized copying or distribution is strictly prohibited.
+// Website: https://www.divatech.in | Contact: legal@divatech.in
+
 import {
   BarChart3, FileText, LayoutDashboard, LogOut, Receipt, ShieldCheck,
   PlusSquare, Menu, UserPlus, ClipboardList, User, TrendingUp, X, ChevronRight,
@@ -164,8 +168,9 @@ export default function MainLayout() {
         </main>
 
         {/* Footer */}
-        <footer className="px-8 py-3 text-center text-xs text-slate-400 border-t border-slate-200/60">
-          LRMS Portal &mdash; Land Revenue &amp; Registration System
+        <footer className="px-8 py-4 text-center text-xs text-slate-400 border-t border-slate-200/60 space-y-0.5">
+          <p>LRMS Portal &mdash; Land Revenue &amp; Registration System</p>
+          <p>&copy; 2026 <span className="font-semibold text-slate-500">DivaTech</span>. All rights reserved. &nbsp;&middot;&nbsp; Proprietary &amp; Confidential &nbsp;&middot;&nbsp; <a href="https://www.divatech.in" target="_blank" rel="noreferrer" className="underline hover:text-slate-600">divatech.in</a></p>
         </footer>
       </div>
 

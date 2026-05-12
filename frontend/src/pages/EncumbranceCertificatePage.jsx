@@ -1,3 +1,7 @@
+// Copyright (c) 2026 DivaTech. All rights reserved.
+// Proprietary and confidential. Unauthorized copying or distribution is strictly prohibited.
+// Website: https://www.divatech.in | Contact: legal@divatech.in
+
 import { useState } from 'react';
 import { Search, FileCheck, ShieldCheck, GitBranch, AlertCircle, Download } from 'lucide-react';
 import Alert from '../components/Alert';

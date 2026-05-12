@@ -1,3 +1,7 @@
+// Copyright (c) 2026 DivaTech. All rights reserved.
+// Proprietary and confidential. Unauthorized copying or distribution is strictly prohibited.
+// Website: https://www.divatech.in | Contact: legal@divatech.in
+
 import { Outlet } from 'react-router-dom';
 import { BarChart3, MapPin, Shield, FileCheck } from 'lucide-react';
 import ChatWidget from '../components/ChatWidget';

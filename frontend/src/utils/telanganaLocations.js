@@ -1,3 +1,7 @@
+// Copyright (c) 2026 DivaTech. All rights reserved.
+// Proprietary and confidential. Unauthorized copying or distribution is strictly prohibited.
+// Website: https://www.divatech.in | Contact: legal@divatech.in
+
 /**
  * Telangana Districts and Mandals
  * Source: Government of Telangana (telangana.gov.in), Registration Dept (igrs.telangana.gov.in)
